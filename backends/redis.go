@@ -1,19 +1,17 @@
-package norse
+package main
 
 import (
 	"fmt"
 	"time"
 	"errors"
-
 	"golang.org/x/net/context"
-
-	"github.com/goibibo/hammerpool"
+	"github.com/goibibo/hammerpool/pool"
 	"github.com/garyburd/redigo/redis"
 )
 
 
 
-var poolMap map[string]*hammerpool.ResourcePool
+var poolMap map[string]*pool.ResourcePool
 
 type RedisStruct struct {
 	redis.Conn
@@ -29,7 +27,7 @@ func (rConn *RedisStruct) Close(){
 func init() {
 	// For each type in redis create corresponding pool
 	for key, config := range redisConfigs{
-		factory := func() (hammerpool.Resource, error) {
+		factory := func() (pool.Resource, error) {
 			cli, err := redis.Dial("tcp", "127.0.0.1:6379")
 			// select db if specified
 			db, ok := config["db"]
@@ -45,7 +43,7 @@ func init() {
 			return res, nil
 		}
 		t := time.Duration(5000*time.Millisecond)
-		poolMap[key] = hammerpool.NewResourcePool(factory, 10, 100, t)
+		poolMap[key] = pool.NewResourcePool(factory, 10, 100, t)
 	}
 }
 
