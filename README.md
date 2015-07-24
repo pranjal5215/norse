@@ -6,11 +6,12 @@
 
 	import (
 		"fmt"
+		"github.com/goibibo/norse"
 	)
 
 	// How to use redis,
 	func main(){
-		redisClient := GetRedisClient(incrFun, decrFun, "redis")
+		redisClient := norse.GetRedisClient(incrFun, decrFun, "redis")
 		value, _ := redis.String(redisClient.Execute("flight", "GET", "a"))
 		fmt.Println(value)
 		value, _ = redis.String(redisClient.Execute("flight", "GET", "key"))
