@@ -19,12 +19,7 @@ func (m *MySqlStruct) Close(){
 func GetMySql() (*MySqlStruct) {
 	return &MySqlStruct{}
 }
-type Closure struct {
-	input [] interface{}
-	Do func()
-	output interface{}
-	
-}
+
 func (m *MySqlStruct)Execute(incr,decr func(),query string ) (*sql.Rows,error) {
 	incr()
 	defer decr()
@@ -33,16 +28,17 @@ func (m *MySqlStruct)Execute(incr,decr func(),query string ) (*sql.Rows,error) {
 func getSQLUrl(level1,level2 string ,m map[string]interface{})string{
 	return ""
 }
+func incr(){}
+func decr(){}
 func (m *MySqlStruct) Select(level1,level2,query string) ([]map[string]interface{}, error) {
 
-
 	var err error
-	m.DB, err = sql.Open("mysql","")
-	
+	m.DB, err = sql.Open("mysql","root:@tcp(127.0.0.1:3306)/example")
+	defer m.Close()
 	if err != nil {
 		return nil, err
 	}
-	rows, err := m.Execute(nil,nil,query)
+	rows, err := m.Execute(incr,decr,query)
 	if err != nil {
 		fmt.Println(err)
 		panic("From MySQL: Error in executing select query")
@@ -90,7 +86,7 @@ func (m *MySqlStruct) Select(level1,level2,query string) ([]map[string]interface
 // How to use mysql,
 func main(){
 	rStruct := GetMySql()
-	query:=""
-	value, _ := rStruct.Select("goibibo", query,"")
+	query:="select * from mytable"
+	value, _ := rStruct.Select("mysql","example", query)
 	fmt.Println(value)
 }
