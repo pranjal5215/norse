@@ -1,18 +1,16 @@
-package norse
+package main
 
 import (
 	"fmt"
 	"time"
 	"errors"
-
 	"golang.org/x/net/context"
 
-	"github.com/goibibo/hammerpool"
 	"github.com/goibibo/norse"
+	"github.com/goibibo/hammerpool/pool"
 	"github.com/garyburd/redigo/redis"
 )
 
-var poolMap map[string]*hammerpool.ResourcePool
 
 // Get redis config 
 var redisConfigs map[string]map[string]string
@@ -23,6 +21,8 @@ var milliSecTimeout = 5000
 // Increment decrement functions
 var incrFun func
 var decrFun func
+
+var poolMap map[string]*pool.ResourcePool
 
 type RedisStruct struct {
 	redis.Conn
