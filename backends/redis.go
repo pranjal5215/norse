@@ -8,12 +8,21 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/goibibo/hammerpool"
+	"github.com/goibibo/norse"
 	"github.com/garyburd/redigo/redis"
 )
 
-
-
 var poolMap map[string]*hammerpool.ResourcePool
+
+// Get redis config 
+var redisConfigs map[string]map[string]string
+
+// redis timeout
+var milliSecTimeout = 5000
+
+// Increment decrement functions
+var incrFun func
+var decrFun func
 
 type RedisStruct struct {
 	redis.Conn
@@ -28,10 +37,14 @@ func (rConn *RedisStruct) Close(){
 // context and a timeout for connection to be created
 func init() {
 	// For each type in redis create corresponding pool
+	redisConfigs, err := norse.LoadRedisConfig()
 	for key, config := range redisConfigs{
 		factory := func() (hammerpool.Resource, error) {
-			cli, err := redis.Dial("tcp", "127.0.0.1:6379")
-			// select db if specified
+			host := config["host"]
+			port := config["port"]
+			redisString := fmt.Sprintf("%s:%s", host, port)
+			cli, err := redis.Dial("tcp", redisString)
+			// select default db if not specified
 			db, ok := config["db"]
 			if ok{
 				cli.Do("SELECT", config)
@@ -39,13 +52,14 @@ func init() {
 				cli.Do("SELECT", 0)
 			}
 			if err != nil{
+				// Write exit
 				fmt.Println("Error in Redis Dial")
 			}
 			res := &RedisStruct{cli}
 			return res, nil
 		}
-		t := time.Duration(5000*time.Millisecond)
-		poolMap[key] = hammerpool.NewResourcePool(factory, 10, 100, t)
+		t := time.Duration(milliSecTimeout*time.Millisecond)
+		poolMap[key] = hammerpool.NewResourcePool(factory, 10, t)
 	}
 }
 
@@ -59,6 +73,10 @@ func GetMyRedis() (*RedisStruct) {
 func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interface{}) (interface{}, error) {
 	ctx := context.TODO()
 	pool, ok := poolMap[redisInstance]
+	defer pool.Put(conn)
+	// Increment and decrement counters using user specified functions.
+	incrFun()
+	defer dncrFun()
 	if ok{
 		conn, err := pool.Get(ctx)
 	}else{
@@ -67,13 +85,18 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 	if err != nil {
 		return nil, err
 	}
-	defer pool.Put(conn)
 	return conn.(*RedisStruct).Do(cmd, args...)
 }
 
+// Set incr decr functions
+func (r *RedisStruct) SetIncrDecrFunctions(incr func, decr func) (string, error){
+	incrFun = incr
+	decrFun = decr
+}
+
 // Redis Get,
-func Get(redisInstance string, key string) (string, error){
-	value, err := redis.String(rStruct.Execute("flight", "GET", "a"))
+func (r *RedisStruct) Get(redisInstance string, key string) (string, error){
+	value, err := redis.String(rStruct.Execute("flight", "GET", "a", Incr, Decr))
 	if err != nil{
 		return value, nil
 	}else{

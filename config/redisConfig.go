@@ -1,10 +1,20 @@
-package config
+package norse
+
+import (
+	"fmt"
+)
+
+var dbname = "redis"
 
 // Load redis configs after general config unmarshall
-func loadRedisConfig() {
-	temp = loadConfig()
+func LoadRedisConfig() (map[string]map[string]string, error) {
+	// Get configVar from general config
+	configVar, err = loadConfig()
+	if err != nil{
+		return nil, err
+	}
 	redisCs := make(map[string]map[string]string)
-	for database, settings := range(temp["redis"].(map[string]interface{})){
+	for database, settings := range(configVar[dbname].(map[string]interface{})){
 		settingsI := settings.(map[string]interface{})
 		configMap := make(map[string]string)
 		for databaseConf, configMapI := range(settingsI){
@@ -13,4 +23,5 @@ func loadRedisConfig() {
 		redisCs[database] = configMap
 	}
 	fmt.Println(redisCs["flight"]["port"])
+	return redisCs, nil
 }
