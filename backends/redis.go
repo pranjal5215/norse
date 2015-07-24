@@ -19,10 +19,6 @@ var redisConfigs map[string]map[string]string
 // redis timeout
 var milliSecTimeout int
 
-// Increment decrement functions
-func incrFun(iKey string, incrementBy int64)error{return nil}
-func decrFun(iKey string, decrementBy int64)error{return nil}
-
 //type closureFunc func() (pool.Resource ,error)
 
 var poolMap map[string]*pool.ResourcePool
