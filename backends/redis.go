@@ -1,6 +1,7 @@
-package main
+package norse
 
 import (
+	"os"
 	"fmt"
 	"time"
 	"errors"
@@ -16,99 +17,106 @@ import (
 var redisConfigs map[string]map[string]string
 
 // redis timeout
-var milliSecTimeout = 5000
+var milliSecTimeout int
 
 // Increment decrement functions
-var incrFun func
-var decrFun func
+func incrFun(iKey string, incrementBy int64)error{return nil}
+func decrFun(iKey string, decrementBy int64)error{return nil}
+
+//type closureFunc func() (pool.Resource ,error)
 
 var poolMap map[string]*pool.ResourcePool
 
-type RedisStruct struct {
+// Redis connection struct
+type RedisConn struct {
 	redis.Conn
 }
 
+// All operations on redis from client happen through this struct
+type RedisStruct struct{
+	fIncr	func(string, int64)error
+	fDecr	func(string, int64)error
+	identifierkey	string
+}
+
 // Close redis conn
-func (rConn *RedisStruct) Close(){
+func (rConn *RedisConn) Close(){
 	_ = rConn.Conn.Close()
 }
+
+
+func factory(key string, config map[string]string) (pool.Resource, error) {
+	host := config["host"]
+	port := config["port"]
+	redisString := fmt.Sprintf("%s:%s", host, port)
+	cli, err := redis.Dial("tcp", redisString)
+	// select default db if not specified
+	db, ok := config["db"]
+	if ok{
+		cli.Do("SELECT", db)
+	}else{
+		cli.Do("SELECT", 0)
+	}
+	if err != nil{
+		// Write exit
+		fmt.Println("Error in Redis Dial")
+	}
+	res := &RedisConn{cli}
+	return res, nil
+}
+
 
 // Specify a factory function to create a connection,
 // context and a timeout for connection to be created
 func init() {
 	// For each type in redis create corresponding pool
+	poolMap = make(map[string]*pool.ResourcePool)
+	milliSecTimeout = 5000
 	redisConfigs, err := norse.LoadRedisConfig()
+	if err != nil{
+		os.Exit(1)
+	}
 	for key, config := range redisConfigs{
-		factory := func() (hammerpool.Resource, error) {
-			host := config["host"]
-			port := config["port"]
-			redisString := fmt.Sprintf("%s:%s", host, port)
-			cli, err := redis.Dial("tcp", redisString)
-			// select default db if not specified
-			db, ok := config["db"]
-			if ok{
-				cli.Do("SELECT", config)
-			}else{
-				cli.Do("SELECT", 0)
+		factoryFunc := func(key string, config map[string]string) (pool.Factory) {
+			return func()(pool.Resource,error){
+				return factory(key, config)
 			}
-			if err != nil{
-				// Write exit
-				fmt.Println("Error in Redis Dial")
-			}
-			res := &RedisStruct{cli}
-			return res, nil
 		}
-		t := time.Duration(milliSecTimeout*time.Millisecond)
-		poolMap[key] = hammerpool.NewResourcePool(factory, 10, t)
+		t := time.Duration(5000*time.Millisecond)
+		poolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 100, t)
 	}
 }
 
 // Your instance type for redis
-func GetMyRedis() (*RedisStruct) {
-	return &RedisStruct{}
+func GetRedisClient(incr, decr func(string, int64)error, identifierKey string) (*RedisStruct) {
+	return &RedisStruct{incr, decr, identifierKey}
 }
 
 // Execute, get connection from a pool 
 // fetch and return connection to a pool.
 func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interface{}) (interface{}, error) {
 	ctx := context.TODO()
+	// Get and set in our pool; for redis we use our own pool
 	pool, ok := poolMap[redisInstance]
-	defer pool.Put(conn)
 	// Increment and decrement counters using user specified functions.
-	incrFun()
-	defer dncrFun()
+	r.fIncr(r.identifierkey, 1)
+	defer r.fDecr(r.identifierkey, 1)
 	if ok{
-		conn, err := pool.Get(ctx)
+		conn, _ := pool.Get(ctx)
+		defer pool.Put(conn)
+		return conn.(*RedisConn).Do(cmd, args...)
 	}else{
 		return nil, errors.New("Redis: instance Not found")
 	}
-	if err != nil {
-		return nil, err
-	}
-	return conn.(*RedisStruct).Do(cmd, args...)
-}
-
-// Set incr decr functions
-func (r *RedisStruct) SetIncrDecrFunctions(incr func, decr func) (string, error){
-	incrFun = incr
-	decrFun = decr
 }
 
 // Redis Get,
 func (r *RedisStruct) Get(redisInstance string, key string) (string, error){
-	value, err := redis.String(rStruct.Execute("flight", "GET", "a", Incr, Decr))
+	value, err := redis.String(r.Execute("flight", "GET", "a"))
 	if err != nil{
 		return value, nil
 	}else{
-		return nil, err
+		return "", err
 	}
 }
 
-// How to use redis,
-func main(){
-	rStruct := GetMyRedis()
-	value, _ := redis.String(rStruct.Execute("flight", "GET", "a"))
-	fmt.Println(value)
-	value, _ = redis.String(rStruct.Execute("flight", "GET", "key"))
-	fmt.Println(value)
-}
