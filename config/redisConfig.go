@@ -9,7 +9,7 @@ var dbname = "redis"
 // Load redis configs after general config unmarshall
 func LoadRedisConfig() (map[string]map[string]string, error) {
 	// Get configVar from general config
-	configVar, err = loadConfig()
+	configVar, err := loadConfig()
 	if err != nil{
 		return nil, err
 	}

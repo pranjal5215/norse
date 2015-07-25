@@ -15,7 +15,6 @@ func loadConfig() (jsonConfig, error) {
 	file, err := ioutil.ReadFile(configFilePath)
 	temp := make(jsonConfig)
 	if err = json.Unmarshal(file, &temp); err != nil {
-		fmt.Println("Error in parsing config: ", err)
 		return nil, err
 	}
 	return temp, err
