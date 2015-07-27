@@ -12,16 +12,19 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
+var (
+	// Get redis config 
+	redisConfigs map[string]map[string]string
 
-// Get redis config 
-var redisConfigs map[string]map[string]string
+	// redis timeout
+	milliSecTimeout int
 
-// redis timeout
-var milliSecTimeout int
+	// type closureFunc func() (pool.Resource ,error)
+	poolMap map[string]*pool.ResourcePool
 
-//type closureFunc func() (pool.Resource ,error)
-
-var poolMap map[string]*pool.ResourcePool
+	// context var to vitess pool
+	ctx    context.Context
+)
 
 // Redis connection struct
 type RedisConn struct {
@@ -40,7 +43,7 @@ func (rConn *RedisConn) Close(){
 	_ = rConn.Conn.Close()
 }
 
-
+// Callback function factory to vitess pool`
 func factory(key string, config map[string]string) (pool.Resource, error) {
 	host := config["host"]
 	port := config["port"]
@@ -66,6 +69,7 @@ func factory(key string, config map[string]string) (pool.Resource, error) {
 // context and a timeout for connection to be created
 func init() {
 	// For each type in redis create corresponding pool
+	ctx = context.Background()
 	poolMap = make(map[string]*pool.ResourcePool)
 	milliSecTimeout = 5000
 	redisConfigs, err := norse.LoadRedisConfig()
@@ -91,7 +95,6 @@ func GetRedisClient(incr, decr func(string, int64)error, identifierKey string) (
 // Execute, get connection from a pool 
 // fetch and return connection to a pool.
 func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interface{}) (interface{}, error) {
-	ctx := context.TODO()
 	// Get and set in our pool; for redis we use our own pool
 	pool, ok := poolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
