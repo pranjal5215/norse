@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	config "github.com/goibibo/norse/config"
 )
-
+//mysql wrapper struct
 type MySqlStruct struct {
 	*sql.DB
 	incr func(string,int64)error
