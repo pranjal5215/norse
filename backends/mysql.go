@@ -1,4 +1,4 @@
-package main
+package norse
 
 import (
 	"fmt"
@@ -95,10 +95,4 @@ func (m *MySqlStruct) Select(vertical,query string) ([]map[string]interface{}, e
 	}
 	return records, nil
 }
-// How to use mysql,
-func main(){
-	rStruct := GetMySql(incr,decr,"sql")
-	query:="select * from mytable"
-	value, _ := rStruct.Select("example", query)
-	fmt.Println(value)
-}
+

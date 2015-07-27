@@ -25,7 +25,3 @@ func LoadSqlConfig() (map[string]map[string]string, error) {
         fmt.Println(mysqlCs["flight"]["port"])
         return mysqlCs, nil
 }
-/*
-func main(){
-	fmt.Println(LoadSqlConfig())
-}*/
