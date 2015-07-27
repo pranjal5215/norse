@@ -44,7 +44,6 @@ func (m *MySqlStruct) Select(vertical,query string) ([]map[string]interface{}, e
 	var err error
 	config_map:= config.LoadSqlConfig()
 	url :=getSQLUrl(vertical,config_map)
-	fmt.Println(url)
 	m.DB, err = sql.Open("mysql",url)
 	defer m.Close()
 	if err != nil {
