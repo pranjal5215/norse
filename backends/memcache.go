@@ -48,7 +48,6 @@ func factory(key string, config []string) (pool.Resource, error) {
 	return res, nil
 }
 
-
 // Specify a factory function to create a connection,
 // context and a timeout for connection to be created
 func init() {
@@ -78,7 +77,7 @@ func GetMemcacheClient(incr, decr func(string, int64)error, identifierKey string
 
 // Memcache Get,
 func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) (string, error){
-	// Get and set in our pool; for redis we use our own pool
+	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := poolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
 	m.fIncr(m.identifierkey, 1)
