@@ -83,8 +83,10 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok{
+		conn = pool.Get(ctx)
+		defer pool.Put(conn)
 		byteArr := []byte(value)
-		mS.Set(&memcache.Item{Key:key, Value:byteArr})
+		conn.Set(&memcache.Item{Key:key, Value:byteArr})
 		return true, nil
 	}else{
 		return nil, errors.New("Memcache: instance Not found")
