@@ -76,30 +76,19 @@ func GetMemcacheClient(incr, decr func(string, int64)error, identifierKey string
 	return &MemcacheStruct{incr, decr, identifierKey}
 }
 
-// Execute, get connection from a pool 
-// fetch and return connection to a pool.
-func (r *MemcacheStruct) Execute(memcacheInstance string, cmd string, args ...interface{}) (interface{}, error) {
-	// Get and set in our pool; for memcache we use our own pool
+// Memcache Get,
+func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) (string, error){
+	// Get and set in our pool; for redis we use our own pool
 	pool, ok := poolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	r.fIncr(r.identifierkey, 1)
-	defer r.fDecr(r.identifierkey, 1)
+	m.fIncr(m.identifierkey, 1)
+	defer m.fDecr(m.identifierkey, 1)
 	if ok{
-		conn, _ := pool.Get(ctx)
-		defer pool.Put(conn)
-		return conn.(*MemcacheConn).Do(cmd, args...)
+		byteArr := []byte(value)
+		mS.Set(&memcache.Item{Key:key, Value:byteArr})
+		return true, nil
 	}else{
 		return nil, errors.New("Memcache: instance Not found")
-	}
-}
-
-// Memcache Get,
-func (r *MemcacheStruct) Get(memcacheInstance string, key string) (string, error){
-	value, err := memcache.String(r.Execute("flight", "GET", "a"))
-	if err != nil{
-		return value, nil
-	}else{
-		return "", err
 	}
 }
 
