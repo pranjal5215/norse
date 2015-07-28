@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	config "github.com/goibibo/norse/config"
 )
-
+//mysql wrapper struct
 type MySqlStruct struct {
 	*sql.DB
 	incr func(string,int64)error
@@ -44,7 +44,6 @@ func (m *MySqlStruct) Select(vertical,query string) ([]map[string]interface{}, e
 	var err error
 	config_map:= config.LoadSqlConfig()
 	url :=getSQLUrl(vertical,config_map)
-	fmt.Println(url)
 	m.DB, err = sql.Open("mysql",url)
 	defer m.Close()
 	if err != nil {
