@@ -76,6 +76,26 @@ func GetMemcacheClient(incr, decr func(string, int64)error, identifierKey string
 }
 
 // Memcache Get,
+func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error){
+	// Get and set in our pool; for memcache we use our own pool
+	pool, ok := poolMap[memcacheInstance]
+	// Increment and decrement counters using user specified functions.
+	m.fIncr(m.identifierkey, 1)
+	defer m.fDecr(m.identifierkey, 1)
+	if ok{
+		conn = pool.Get(ctx)
+		defer pool.Put(conn)
+		value, err := conn.Get(key)
+		if err != nil{
+			return "", err
+		}
+		return value, err
+	}else{
+		return nil, errors.New("Memcache: instance Not found")
+	}
+}
+
+// Memcache Set,
 func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) (string, error){
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := poolMap[memcacheInstance]
@@ -93,3 +113,42 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 	}
 }
 
+func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int, val string) (bool, error) {
+	// Get and set in our pool; for memcache we use our own pool
+	pool, ok := poolMap[memcacheInstance]
+	// Increment and decrement counters using user specified functions.
+	m.fIncr(m.identifierkey, 1)
+	defer m.fDecr(m.identifierkey, 1)
+	if ok{
+		resp := conn.Set(&memcache.Item{Key: key, Value: []byte(val)})
+		if resp != nil {
+			return false, resp
+		} else {
+			err := conn.Touch(key, int32(duration))
+			if err != nil {
+				return false, err
+			}
+		}
+	}else{
+		return nil, errors.New("Memcache: instance Not found")
+	}
+}
+
+func (m *MemcacheStruct) Expire(memcacheInstance string, key string, duration int) (bool, error) {
+	// Get and set in our pool; for memcache we use our own pool
+	pool, ok := poolMap[memcacheInstance]
+	// Increment and decrement counters using user specified functions.
+	m.fIncr(m.identifierkey, 1)
+	defer m.fDecr(m.identifierkey, 1)
+	if ok{
+		conn = pool.Get(ctx)
+		defer pool.Put(conn)
+		err := conn.Touch(key, int32(duration))
+		if err!=nil{
+			return "", err
+		}
+		return true, nil
+	}else{
+		return nil, errors.New("Memcache: instance Not found")
+	}
+}
