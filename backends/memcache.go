@@ -107,9 +107,9 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 		defer pool.Put(conn)
 		byteArr := []byte(value)
 		conn.Set(&memcache.Item{Key: key, Value: byteArr})
-		return true, nil
+		return "", nil
 	} else {
-		return nil, errors.New("Memcache: instance Not found")
+		return "", errors.New("Memcache: instance Not found")
 	}
 }
 
@@ -120,6 +120,8 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok {
+		conn, _ := pool.Get(memCtx)
+		defer pool.Put(conn)
 		resp := conn.Set(&memcache.Item{Key: key, Value: []byte(val)})
 		if resp != nil {
 			return false, resp
@@ -130,7 +132,7 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 			}
 		}
 	} else {
-		return nil, errors.New("Memcache: instance Not found")
+		return false, errors.New("Memcache: instance Not found")
 	}
 }
 
@@ -149,6 +151,6 @@ func (m *MemcacheStruct) Expire(memcacheInstance string, key string, duration in
 		}
 		return true, nil
 	} else {
-		return nil, errors.New("Memcache: instance Not found")
+		return true, errors.New("Memcache: instance Not found")
 	}
 }
