@@ -1,4 +1,4 @@
-package norse
+package main
 
 import (
 	"errors"
@@ -85,11 +85,11 @@ func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
-		value, err := conn.Get(key)
+		value, err := conn.(*MemcacheConn).Get(key)
 		if err != nil {
 			return "", err
 		}
-		return value, err
+		return string(value.Value), err
 	} else {
 		return "", errors.New("Memcache: instance Not found")
 	}
@@ -106,7 +106,7 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
 		byteArr := []byte(value)
-		conn.Set(&memcache.Item{Key: key, Value: byteArr})
+		conn.(*MemcacheConn).Set(&memcache.Item{Key: key, Value: byteArr})
 		return "", nil
 	} else {
 		return "", errors.New("Memcache: instance Not found")
@@ -122,14 +122,15 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
-		resp := conn.Set(&memcache.Item{Key: key, Value: []byte(val)})
+		resp := conn.(*MemcacheConn).Set(&memcache.Item{Key: key, Value: []byte(val)})
 		if resp != nil {
 			return false, resp
 		} else {
-			err := conn.Touch(key, int32(duration))
+			err := conn.(*MemcacheConn).Touch(key, int32(duration))
 			if err != nil {
 				return false, err
 			}
+			return true, nil
 		}
 	} else {
 		return false, errors.New("Memcache: instance Not found")
@@ -143,11 +144,11 @@ func (m *MemcacheStruct) Expire(memcacheInstance string, key string, duration in
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok {
-		conn = pool.Get(memCtx)
+		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
-		err := conn.Touch(key, int32(duration))
+		err := conn.(*MemcacheConn).Touch(key, int32(duration))
 		if err != nil {
-			return "", err
+			return false, err
 		}
 		return true, nil
 	} else {
