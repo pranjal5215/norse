@@ -122,9 +122,9 @@ func (r *RedisStruct) Get(redisInstance string, key string) (string, error) {
 func (r *RedisStruct) Set(redisInstance string, key string, value interface{}) (string, error) {
 	_, err := r.Execute(redisInstance, "SET", key, value)
 	if err != nil {
-		return value, nil
-	} else {
 		return "", err
+	}else {
+		return "", nil
 	}
 }
 
