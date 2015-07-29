@@ -44,7 +44,7 @@ func (rConn *RedisConn) Close() {
 }
 
 // Callback function factory to vitess pool`
-func factory(key string, config map[string]string) (pool.Resource, error) {
+func redisFactory(key string, config map[string]string) (pool.Resource, error) {
 	host := config["host"]
 	port := config["port"]
 	redisString := fmt.Sprintf("%s:%s", host, port)
@@ -78,7 +78,7 @@ func init() {
 	for key, config := range redisConfigs {
 		factoryFunc := func(key string, config map[string]string) pool.Factory {
 			return func() (pool.Resource, error) {
-				return factory(key, config)
+				return redisFactory(key, config)
 			}
 		}
 		t := time.Duration(5000 * time.Millisecond)

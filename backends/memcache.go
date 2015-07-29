@@ -42,7 +42,7 @@ func (mConn *MemcacheConn) Close() {
 }
 
 // Callback function factory to vitess pool`
-func factory(key string, server []string) (pool.Resource, error) {
+func memcacheFactory(key string, server []string) (pool.Resource, error) {
 	conn := memcache.New(server...)
 	memConn := &MemcacheConn{conn}
 	return memConn, nil
@@ -62,7 +62,7 @@ func init() {
 	for key, config := range memcacheConfigs {
 		factoryFunc := func(key string, config []string) pool.Factory {
 			return func() (pool.Resource, error) {
-				return factory(key, config)
+				return memcacheFactory(key, config)
 			}
 		}
 		t := time.Duration(5000 * time.Millisecond)
@@ -83,7 +83,7 @@ func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok {
-		conn = pool.Get(memCtx)
+		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
 		value, err := conn.Get(key)
 		if err != nil {
@@ -91,7 +91,7 @@ func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error
 		}
 		return value, err
 	} else {
-		return nil, errors.New("Memcache: instance Not found")
+		return "", errors.New("Memcache: instance Not found")
 	}
 }
 
@@ -103,7 +103,7 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok {
-		conn = pool.Get(memCtx)
+		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
 		byteArr := []byte(value)
 		conn.Set(&memcache.Item{Key: key, Value: byteArr})
