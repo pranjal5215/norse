@@ -122,7 +122,7 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 	if ok{
 		resp := conn.Set(&memcache.Item{Key: key, Value: []byte(val)})
 		if resp != nil {
-			return false, erm
+			return false, resp
 		} else {
 			err := conn.Touch(key, int32(duration))
 			if err != nil {
