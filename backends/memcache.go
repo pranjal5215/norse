@@ -2,7 +2,6 @@ package norse
 
 import (
 	"errors"
-	"fmt"
 	"golang.org/x/net/context"
 	"os"
 	"time"
@@ -17,13 +16,13 @@ var (
 	memcacheConfigs map[string]map[string]string
 
 	// memcache timeout
-	milliSecTimeout int
+	memMilliSecTimeout int
 
 	// type closureFunc func() (pool.Resource ,error)
-	poolMap map[string]*pool.ResourcePool
+	memPoolMap map[string]*pool.ResourcePool
 
 	// context var to vitess pool
-	ctx context.Context
+	memCtx context.Context
 )
 
 // Memcache connection struct
@@ -39,21 +38,22 @@ type MemcacheStruct struct {
 }
 
 // Close memcache conn
-func (rConn *MemcacheConn) Close() {
+func (mConn *MemcacheConn) Close() {
 }
 
 // Callback function factory to vitess pool`
-func factory(key string, config []string) (pool.Resource, error) {
-	res := memcache.New(server...)
-	return res, nil
+func factory(key string, server []string) (pool.Resource, error) {
+	conn := memcache.New(server...)
+	memConn := &MemcacheConn{conn}
+	return memConn, nil
 }
 
 // Specify a factory function to create a connection,
 // context and a timeout for connection to be created
 func init() {
 	// For each type in memcache create corresponding pool
-	ctx = context.Background()
-	poolMap = make(map[string]*pool.ResourcePool)
+	memCtx = context.Background()
+	memPoolMap = make(map[string]*pool.ResourcePool)
 	milliSecTimeout = 5000
 	memcacheConfigs, err := config.LoadMemcacheConfig()
 	if err != nil {
@@ -66,7 +66,7 @@ func init() {
 			}
 		}
 		t := time.Duration(5000 * time.Millisecond)
-		poolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 100, t)
+		memPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 100, t)
 	}
 }
 
@@ -78,12 +78,12 @@ func GetMemcacheClient(incr, decr func(string, int64) error, identifierKey strin
 // Memcache Get,
 func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error) {
 	// Get and set in our pool; for memcache we use our own pool
-	pool, ok := poolMap[memcacheInstance]
+	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok {
-		conn = pool.Get(ctx)
+		conn = pool.Get(memCtx)
 		defer pool.Put(conn)
 		value, err := conn.Get(key)
 		if err != nil {
@@ -98,12 +98,12 @@ func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error
 // Memcache Set,
 func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) (string, error) {
 	// Get and set in our pool; for memcache we use our own pool
-	pool, ok := poolMap[memcacheInstance]
+	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok {
-		conn = pool.Get(ctx)
+		conn = pool.Get(memCtx)
 		defer pool.Put(conn)
 		byteArr := []byte(value)
 		conn.Set(&memcache.Item{Key: key, Value: byteArr})
@@ -115,7 +115,7 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 
 func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int, val string) (bool, error) {
 	// Get and set in our pool; for memcache we use our own pool
-	pool, ok := poolMap[memcacheInstance]
+	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
@@ -136,12 +136,12 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 
 func (m *MemcacheStruct) Expire(memcacheInstance string, key string, duration int) (bool, error) {
 	// Get and set in our pool; for memcache we use our own pool
-	pool, ok := poolMap[memcacheInstance]
+	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
 	m.fIncr(m.identifierkey, 1)
 	defer m.fDecr(m.identifierkey, 1)
 	if ok {
-		conn = pool.Get(ctx)
+		conn = pool.Get(memCtx)
 		defer pool.Put(conn)
 		err := conn.Touch(key, int32(duration))
 		if err != nil {

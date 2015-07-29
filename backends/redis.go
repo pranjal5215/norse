@@ -20,10 +20,10 @@ var (
 	milliSecTimeout int
 
 	// type closureFunc func() (pool.Resource ,error)
-	poolMap map[string]*pool.ResourcePool
+	redisPoolMap map[string]*pool.ResourcePool
 
 	// context var to vitess pool
-	ctx context.Context
+	redisCtx context.Context
 )
 
 // Redis connection struct
@@ -68,8 +68,8 @@ func factory(key string, config map[string]string) (pool.Resource, error) {
 // context and a timeout for connection to be created
 func init() {
 	// For each type in redis create corresponding pool
-	ctx = context.Background()
-	poolMap = make(map[string]*pool.ResourcePool)
+	redisCtx = context.Background()
+	redisPoolMap = make(map[string]*pool.ResourcePool)
 	milliSecTimeout = 5000
 	redisConfigs, err := config.LoadRedisConfig()
 	if err != nil {
@@ -82,7 +82,7 @@ func init() {
 			}
 		}
 		t := time.Duration(5000 * time.Millisecond)
-		poolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 100, t)
+		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 100, t)
 	}
 }
 
@@ -95,12 +95,12 @@ func GetRedisClient(incr, decr func(string, int64) error, identifierKey string) 
 // fetch and return connection to a pool.
 func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interface{}) (interface{}, error) {
 	// Get and set in our pool; for redis we use our own pool
-	pool, ok := poolMap[redisInstance]
+	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
 	r.fIncr(r.identifierkey, 1)
 	defer r.fDecr(r.identifierkey, 1)
 	if ok {
-		conn, _ := pool.Get(ctx)
+		conn, _ := pool.Get(redisCtx)
 		defer pool.Put(conn)
 		return conn.(*RedisConn).Do(cmd, args...)
 	} else {
