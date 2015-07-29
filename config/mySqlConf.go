@@ -4,10 +4,9 @@ import (
 	"fmt"
 )
 
-
 // Load mysql configs after general config unmarshall
 func LoadSqlConfig() (map[string]map[string]string, error) {
-	dbname = "mysql"
+	var dbname = "mysql"
         // Get configVar from general config
         configVar, err := loadConfig()
         if err != nil{

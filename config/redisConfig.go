@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-var dbname = "redis"
 
 // Load redis configs after general config unmarshall
 func LoadRedisConfig() (map[string]map[string]string, error) {
+	var dbname = "redis"
 	// Get configVar from general config
 	configVar, err := loadConfig()
 	if err != nil{
