@@ -9,7 +9,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/goibibo/hammerpool/pool"
-	"github.com/goibibo/norse"
+	"github.com/goibibo/norse/config"
 )
 
 var (
@@ -71,7 +71,7 @@ func init() {
 	ctx = context.Background()
 	poolMap = make(map[string]*pool.ResourcePool)
 	milliSecTimeout = 5000
-	redisConfigs, err := norse.LoadRedisConfig()
+	redisConfigs, err := config.LoadRedisConfig()
 	if err != nil {
 		os.Exit(1)
 	}

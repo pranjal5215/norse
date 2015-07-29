@@ -9,7 +9,7 @@ import (
 
 	"github.com/goibibo/gomemcache/memcache"
 	"github.com/goibibo/hammerpool/pool"
-	"github.com/goibibo/norse"
+	"github.com/goibibo/norse/config"
 )
 
 var (
@@ -55,7 +55,7 @@ func init() {
 	ctx = context.Background()
 	poolMap = make(map[string]*pool.ResourcePool)
 	milliSecTimeout = 5000
-	memcacheConfigs, err := norse.LoadMemcacheConfig()
+	memcacheConfigs, err := config.LoadMemcacheConfig()
 	if err != nil {
 		os.Exit(1)
 	}
