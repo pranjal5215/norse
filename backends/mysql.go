@@ -1,11 +1,11 @@
-package norse
+package backends
 
 import (
 	"fmt"
 	"time"
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	config "github.com/goibibo/norse/config"
+	"github.com/goibibo/norse/config"
 )
 //mysql wrapper struct
 type MySqlStruct struct {
@@ -42,7 +42,11 @@ func decr(s string,i int64)error{
 func (m *MySqlStruct) Select(vertical,query string) ([]map[string]interface{}, error) {
 
 	var err error
-	config_map:= config.LoadSqlConfig()
+	config_map,err:= config.LoadSqlConfig()
+	 if err != nil {
+                return nil, err
+        }
+
 	url :=getSQLUrl(vertical,config_map)
 	m.DB, err = sql.Open("mysql",url)
 	defer m.Close()
