@@ -1,8 +1,4 @@
-package norse
-
-import (
-	"fmt"
-)
+package config
 
 // Load redis configs after general config unmarshall
 func LoadRedisConfig() (map[string]map[string]string, error) {
@@ -21,6 +17,5 @@ func LoadRedisConfig() (map[string]map[string]string, error) {
 		}
 		redisCs[database] = configMap
 	}
-	fmt.Println(redisCs["flight"]["port"])
 	return redisCs, nil
 }

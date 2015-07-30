@@ -1,11 +1,11 @@
-package norse
+package backends
 
 import (
 	"fmt"
 	"time"
 	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	config "github.com/goibibo/norse/config"
+	"github.com/goibibo/norse/config"
 )
 //mysql wrapper struct
 type MySqlStruct struct {

@@ -1,4 +1,4 @@
-package norse
+package backends
 
 import (
 	"errors"

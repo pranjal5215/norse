@@ -1,4 +1,4 @@
-package norse
+package config
 
 import (
 	"fmt"
