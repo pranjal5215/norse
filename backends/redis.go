@@ -112,9 +112,9 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 func (r *RedisStruct) Get(redisInstance string, key string) (string, error) {
 	value, err := redis.String(r.Execute(redisInstance, "GET", key))
 	if err != nil {
-		return value, nil
+		return "", nil
 	} else {
-		return "", err
+		return value, err
 	}
 }
 
