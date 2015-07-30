@@ -54,7 +54,7 @@ func init() {
 	// For each type in memcache create corresponding pool
 	memCtx = context.Background()
 	memPoolMap = make(map[string]*pool.ResourcePool)
-	milliSecTimeout = 5000
+	memMilliSecTimeout = 5000
 	memcacheConfigs, err := config.LoadMemcacheConfig()
 	if err != nil {
 		os.Exit(1)
