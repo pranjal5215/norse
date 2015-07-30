@@ -50,7 +50,7 @@ func memcacheFactory(key string, server []string) (pool.Resource, error) {
 
 // Specify a factory function to create a connection,
 // context and a timeout for connection to be created
-func init() {
+func configureMemcache() {
 	// For each type in memcache create corresponding pool
 	memCtx = context.Background()
 	memPoolMap = make(map[string]*pool.ResourcePool)
