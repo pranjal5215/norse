@@ -1,9 +1,8 @@
 package norse
 
-
 import (
-        "encoding/json"
-        "io/ioutil"
+	"encoding/json"
+	"io/ioutil"
 )
 
 type jsonConfig map[string]interface{}
@@ -19,4 +18,3 @@ func loadConfig() (jsonConfig, error) {
 	}
 	return temp, err
 }
-

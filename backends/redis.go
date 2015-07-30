@@ -123,7 +123,7 @@ func (r *RedisStruct) Set(redisInstance string, key string, value interface{}) (
 	_, err := r.Execute(redisInstance, "SET", key, value)
 	if err != nil {
 		return "", err
-	}else {
+	} else {
 		return "", nil
 	}
 }
