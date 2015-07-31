@@ -87,8 +87,8 @@ func configureRedis() {
 }
 
 // Your instance type for redis
-func GetRedisClient(incr, decr func(string, int64) error, identifierKey string) *RedisStruct, error {
-	if (len(redisPoolMap) == 0){
+func GetRedisClient(incr, decr func(string, int64) error, identifierKey string) (*RedisStruct, error) {
+	if len(redisPoolMap) == 0 {
 		return nil, errors.New("Redis Not Configured, please call Configure()")
 	}
 	return &RedisStruct{incr, decr, identifierKey}, nil
@@ -100,10 +100,13 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 	// Get and set in our pool; for redis we use our own pool
 	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
-	r.fIncr(r.identifierkey, 1)
-	defer r.fDecr(r.identifierkey, 1)
 	if ok {
-		conn, _ := pool.Get(redisCtx)
+		conn, err := pool.Get(redisCtx)
+		if err != nil {
+			return nil, err
+		}
+		r.fIncr(r.identifierkey, 1)
+		defer r.fDecr(r.identifierkey, 1)
 		defer pool.Put(conn)
 		return conn.(*RedisConn).Do(cmd, args...)
 	} else {
