@@ -66,7 +66,7 @@ func redisFactory(key string, config map[string]string) (pool.Resource, error) {
 
 // Specify a factory function to create a connection,
 // context and a timeout for connection to be created
-func init() {
+func configureRedis() {
 	// For each type in redis create corresponding pool
 	redisCtx = context.Background()
 	redisPoolMap = make(map[string]*pool.ResourcePool)
