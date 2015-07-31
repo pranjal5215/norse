@@ -72,7 +72,10 @@ func configureMemcache() {
 
 // Your instance type for memcache
 func GetMemcacheClient(incr, decr func(string, int64) error, identifierKey string) *MemcacheStruct {
-	return &MemcacheStruct{incr, decr, identifierKey}
+	if (len(memPoolMap) == 0){
+		return nil, errors.New("Memcache is not configured, please call Configure()")
+	}
+	return &MemcacheStruct{incr, decr, identifierKey}, nil
 }
 
 // Memcache Get,

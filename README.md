@@ -6,22 +6,35 @@
 
 	import (
 		"fmt"
-		"github.com/goibibo/norse"
+		"github.com/goibibo/norse/backends"
+		"github.com/goibibo/norse/config"
 	)
 
 	// Increment decrement functions
 	func incrFun(iKey string, incrementBy int64)error{return nil}
 	func decrFun(iKey string, decrementBy int64)error{return nil}
 
-	// How to use redis,
 	func main(){
-		redisClient := norse.GetRedisClient(incrFun, decrFun, "redis")
-		value, _ := redis.String(redisClient.Execute("flight", "GET", "a"))
+		// Save config.json and set path to that path
+		config.Configure(path)
+		backends.Configure()
+
+		// How to use redis,
+		redisClient, _ := norse.GetRedisClient(incrFun, decrFun, "redis")
+		value, _ := redisClient.Get("configType", "key"))
 		fmt.Println(value)
-		value, _ = redis.String(redisClient.Execute("flight", "GET", "key"))
+
+
+		// How to use memcache,
+		memcacheClient, _ := norse.GetMemcacheClient(incrFun, decrFun, "memcache")
+		value, _ := memcacheClient.Get("configType", "key"))
 		fmt.Println(value)
-		value, _ = redis.String(redisClient.Execute("bus", "GET", "hhh"))
-		fmt.Println(value)
-		value, _ = redis.String(redisClient.Execute("bus", "GET", "xxx"))
-		fmt.Println(value)
+
+
+		// How to use MySQL,
+		mysqlClient :=norse.GetMysqlClient(incrFunc,decrFunc,"mysql")
+		// "mysql" database name; 
+		mysqlmap := mysqlClient.Select("mysql","select * from mytable")	
+		fmt.Println(mysqlmap)
+		
 	}
