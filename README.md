@@ -1,5 +1,7 @@
 # norse
 
+See config file in gist [here](https://gist.github.com/pranjal5215/cb8977317023f0f2ba40)
+
 ####Code:
 
 	package main
@@ -15,13 +17,14 @@
 	func decrFun(iKey string, decrementBy int64)error{return nil}
 
 	func main(){
+		// See gist for sample config
 		// Save config.json and set path to that path
 		config.Configure(path)
 		backends.Configure()
 
 		// How to use redis,
 		redisClient, _ := norse.GetRedisClient(incrFun, decrFun, "redis")
-		value, _ := redisClient.Get("configType", "key"))
+		value, _ := redisClient.Get("redisConfig", "key"))
 		fmt.Println(value)
 
 
