@@ -32,8 +32,8 @@ type MemcacheConn struct {
 
 // All operations on memcache from client happen through this struct
 type MemcacheStruct struct {
-	fIncr         func(string, int64) error
-	fDecr         func(string, int64) error
+	fIncr         func(string) error
+	fDecr         func(string) error
 	identifierkey string
 }
 
@@ -83,8 +83,8 @@ func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey, 1)
-	defer m.fDecr(m.identifierkey, 1)
+	m.fIncr(m.identifierkey)
+	defer m.fDecr(m.identifierkey)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
