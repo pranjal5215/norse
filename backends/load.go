@@ -6,15 +6,16 @@ import (
 
 var doOnce *sync.Once
 
-func init(){
+func init() {
 	doOnce = &sync.Once{}
 }
 
-func Configure(){
+func Configure() {
 	doOnce.Do(doConfigure)
 }
 
-func doConfigure(){
+func doConfigure() {
 	configureRedis()
 	configureMemcache()
+	configureMySql()
 }

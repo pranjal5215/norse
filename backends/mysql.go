@@ -1,54 +1,62 @@
 package backends
 
 import (
-	"fmt"
-	"time"
-	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/goibibo/norse/config"
+	"time"
 )
+
 //mysql wrapper struct
+var config_map_mysql map[string]map[string]string
+
+func configureMySql() {
+	var err error
+	config_map_mysql, err = config.LoadSqlConfig()
+	if err != nil {
+		panic("Error in loading config for mysql")
+
+	}
+}
+
 type MySqlStruct struct {
 	*sql.DB
-	incr func(string,int64)error
-	decr func(string,int64)error
-	key string
+	incr func(string, int64) error
+	decr func(string, int64) error
+	key  string
 }
 
 // Close mysql conn
-func (m *MySqlStruct) Close(){
+func (m *MySqlStruct) Close() {
 	_ = m.DB.Close()
 }
+
 // Your instance type for mysql
-func GetMySql(incr,decr func(string,int64)error,key string) (*MySqlStruct) {
-	return &MySqlStruct{&sql.DB{},incr,decr,key}
+func GetMySql(incr, decr func(string, int64) error, key string) *MySqlStruct {
+	return &MySqlStruct{&sql.DB{}, incr, decr, key}
 }
 
-func (m *MySqlStruct)Execute(query string ) (*sql.Rows,error) {
-	m.incr(m.key,1)
-	defer m.decr(m.key,1)
+func (m *MySqlStruct) Execute(query string) (*sql.Rows, error) {
+	m.incr(m.key, 1)
+	defer m.decr(m.key, 1)
 	return m.DB.Query(query)
 }
-func getSQLUrl(vertical string ,config_map map[string] map[string] string) string{
-	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",config_map[vertical]["username"],config_map[vertical]["password"],config_map[vertical]["host"],config_map[vertical]["port"],config_map[vertical]["database"])
+func getSQLUrl(vertical string, config_map_mysql map[string]map[string]string) string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config_map_mysql[vertical]["username"], config_map_mysql[vertical]["password"], config_map_mysql[vertical]["host"], config_map_mysql[vertical]["port"], config_map_mysql[vertical]["database"])
 
 }
-func incr(s string,i int64)error{
-        return nil
+func incr(s string, i int64) error {
+	return nil
 }
-func decr(s string,i int64)error{
-        return nil
+func decr(s string, i int64) error {
+	return nil
 }
-func (m *MySqlStruct) Select(vertical,query string) ([]map[string]interface{}, error) {
+func (m *MySqlStruct) Select(vertical, query string) ([]map[string]interface{}, error) {
 
 	var err error
-	config_map,err:= config.LoadSqlConfig()
-	 if err != nil {
-                return nil, err
-        }
-
-	url :=getSQLUrl(vertical,config_map)
-	m.DB, err = sql.Open("mysql",url)
+	url := getSQLUrl(vertical, config_map_mysql)
+	m.DB, err = sql.Open("mysql", url)
 	defer m.Close()
 	if err != nil {
 		return nil, err
@@ -98,4 +106,3 @@ func (m *MySqlStruct) Select(vertical,query string) ([]map[string]interface{}, e
 	}
 	return records, nil
 }
-
