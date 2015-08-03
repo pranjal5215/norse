@@ -10,7 +10,8 @@ import (
 
 //mysql wrapper struct
 var config_map_mysql map[string]map[string]string
-
+var mysqlstructmap map[string]*MySqlStruct
+// mysqlstructmap is a map of pools
 func configureMySql() {
 	var err error
 	config_map_mysql, err = config.LoadSqlConfig()
@@ -18,12 +19,22 @@ func configureMySql() {
 		panic("Error in loading config for mysql")
 
 	}
+	for vertical, _ := range config_map_mysql {
+		url := getSQLUrl(vertical, config_map_mysql)
+		mysqldb, err := sql.Open("mysql", url)
+		if err != nil {
+			panic("error in creating pool ")
+		}
+		mysqldb.SetMaxOpenConns(10)
+		mysqldb.SetMaxIdleConns(6)
+		mysqlstructmap[vertical] = &MySqlStruct{mysqldb, nil, nil, ""}
+	}
 }
 
 type MySqlStruct struct {
 	*sql.DB
-	incr func(string, int64) error
-	decr func(string, int64) error
+	incr func(string) error
+	decr func(string) error
 	key  string
 }
 
@@ -33,13 +44,22 @@ func (m *MySqlStruct) Close() {
 }
 
 // Your instance type for mysql
-func GetMySql(incr, decr func(string, int64) error, key string) *MySqlStruct {
-	return &MySqlStruct{&sql.DB{}, incr, decr, key}
+func GetMySql(incr, decr func(string) error, key, vertical string) (*MySqlStruct, error) {
+	sqlstruct, present := mysqlstructmap[vertical]
+	if present {
+		sqlstruct.incr = incr
+		sqlstruct.decr = decr
+		sqlstruct.key = key
+	
+		return sqlstruct, nil
+	} else {
+		panic("vertical not present in config")
+	}
 }
 
 func (m *MySqlStruct) Execute(query string) (*sql.Rows, error) {
-	m.incr(m.key, 1)
-	defer m.decr(m.key, 1)
+	m.incr(m.key)
+	defer m.decr(m.key)
 	return m.DB.Query(query)
 }
 func getSQLUrl(vertical string, config_map_mysql map[string]map[string]string) string {
@@ -52,15 +72,10 @@ func incr(s string, i int64) error {
 func decr(s string, i int64) error {
 	return nil
 }
-func (m *MySqlStruct) Select(vertical, query string) ([]map[string]interface{}, error) {
+func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 
 	var err error
-	url := getSQLUrl(vertical, config_map_mysql)
-	m.DB, err = sql.Open("mysql", url)
 	defer m.Close()
-	if err != nil {
-		return nil, err
-	}
 	rows, err := m.Execute(query)
 	if err != nil {
 		fmt.Println(err)
