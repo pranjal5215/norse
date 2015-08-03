@@ -22,8 +22,8 @@ func configureMySql() {
 
 type MySqlStruct struct {
 	*sql.DB
-	incr func(string, int64) error
-	decr func(string, int64) error
+	incr func(string) error
+	decr func(string) error
 	key  string
 }
 
@@ -33,13 +33,16 @@ func (m *MySqlStruct) Close() {
 }
 
 // Your instance type for mysql
-func GetMySql(incr, decr func(string, int64) error, key string) *MySqlStruct {
-	return &MySqlStruct{&sql.DB{}, incr, decr, key}
+func GetMySql(incr, decr func(string) error, key string) *MySqlStruct {
+	mysqldb := &sql.DB{}
+	mysqldb.SetMaxOpenConns(10)
+	mysqldb.SetMaxIdleConns(6)
+	return &MySqlStruct{mysqldb, incr, decr, key}
 }
 
 func (m *MySqlStruct) Execute(query string) (*sql.Rows, error) {
-	m.incr(m.key, 1)
-	defer m.decr(m.key, 1)
+	m.incr(m.key)
+	defer m.decr(m.key)
 	return m.DB.Query(query)
 }
 func getSQLUrl(vertical string, config_map_mysql map[string]map[string]string) string {

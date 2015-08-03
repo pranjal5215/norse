@@ -81,7 +81,7 @@ func configureRedis() {
 				return redisFactory(key, config)
 			}
 		}
-		t := time.Duration(5000 * time.Millisecond)
+		t := time.Duration(time.Duration(milliSecTimeout) * time.Millisecond)
 		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 100, t)
 	}
 }
