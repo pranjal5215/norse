@@ -87,7 +87,7 @@ func configureRedis() {
 }
 
 // Your instance type for redis
-func GetRedisClient(incr, decr func(string, int64) error, identifierKey string) (*RedisStruct, error) {
+func GetRedisClient(incr, decr func(string) error, identifierKey string) (*RedisStruct, error) {
 	if len(redisPoolMap) == 0 {
 		return nil, errors.New("Redis Not Configured, please call Configure()")
 	}
