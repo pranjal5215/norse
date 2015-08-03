@@ -13,8 +13,8 @@ See config file in gist [here](https://gist.github.com/pranjal5215/cb8977317023f
 	)
 
 	// Increment decrement functions
-	func incrFun(iKey string, incrementBy int64)error{return nil}
-	func decrFun(iKey string, decrementBy int64)error{return nil}
+	func incrFun(iKey string)error{return nil}
+	func decrFun(iKey string)error{return nil}
 
 	func main(){
 		// See gist for sample config

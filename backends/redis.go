@@ -33,8 +33,8 @@ type RedisConn struct {
 
 // All operations on redis from client happen through this struct
 type RedisStruct struct {
-	fIncr         func(string, int64) error
-	fDecr         func(string, int64) error
+	fIncr         func(string) error
+	fDecr         func(string) error
 	identifierkey string
 }
 
@@ -105,8 +105,8 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 		if err != nil {
 			return nil, err
 		}
-		r.fIncr(r.identifierkey, 1)
-		defer r.fDecr(r.identifierkey, 1)
+		r.fIncr(r.identifierkey)
+		defer r.fDecr(r.identifierkey)
 		defer pool.Put(conn)
 		return conn.(*RedisConn).Do(cmd, args...)
 	} else {
