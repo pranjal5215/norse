@@ -71,7 +71,7 @@ func configureMemcache() {
 }
 
 // Your instance type for memcache
-func GetMemcacheClient(incr, decr func(string, int64) error, identifierKey string) (*MemcacheStruct, nil) {
+func GetMemcacheClient(incr, decr func(string) error, identifierKey string) (*MemcacheStruct, error) {
 	if len(memPoolMap) == 0 {
 		return nil, errors.New("Memcache is not configured, please call Configure()")
 	}
@@ -103,8 +103,8 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey, 1)
-	defer m.fDecr(m.identifierkey, 1)
+	m.fIncr(m.identifierkey)
+	defer m.fDecr(m.identifierkey)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
@@ -120,8 +120,8 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey, 1)
-	defer m.fDecr(m.identifierkey, 1)
+	m.fIncr(m.identifierkey)
+	defer m.fDecr(m.identifierkey)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
@@ -144,8 +144,8 @@ func (m *MemcacheStruct) Expire(memcacheInstance string, key string, duration in
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey, 1)
-	defer m.fDecr(m.identifierkey, 1)
+	m.fIncr(m.identifierkey)
+	defer m.fDecr(m.identifierkey)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
