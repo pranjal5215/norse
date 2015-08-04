@@ -142,3 +142,13 @@ func (r *RedisStruct) MGet(redisInstance string, keys ...interface{}) ([]string,
 	}
 	return values, nil
 }
+
+// Redis MSet
+func (r *RedisStruct) MSet(redisInstance string, keyVapPair map[string]interface{}) (bool, error) {
+	_, err := r.Execute(redisInstance, "MSET", redis.Args{}.AddFlat(keyVapPair)...)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
