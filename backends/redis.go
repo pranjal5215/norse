@@ -156,7 +156,7 @@ func (r *RedisStruct) MSet(redisInstance string, keyVapPair map[string]interface
 func (r *RedisStruct) Smembers(redisInstance string, key string) ([]string, error) {
 	val, err := redis.Values(r.Execute(redisInstance, "SMEMBERS", key))
 	if (err != nil){
-		return []string, err
+		return []string{}, err
 	}
 	s := make([]string, len(val))
 	//Convert array of Bytes to array of string
@@ -165,3 +165,32 @@ func (r *RedisStruct) Smembers(redisInstance string, key string) ([]string, erro
 	}
 	return s, nil
 }
+
+// redis SADD
+func (r *RedisStruct) SAdd(redisInstance string, key string, values ...interface{}) (bool, error) {
+	_, err := r.Execute(redisInstance, "SADD", redis.Args{}.Add(key).AddFlat(values)...)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// redis SREM
+func (r *RedisStruct) SRem(redisInstance string, key string, value string) (bool, error) {
+	_, err := r.Execute(redisInstance, "SREM", key, value)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// redis SISMEMBER
+func (r *RedisStruct) Sismember(redisInstance string, key string, member string) (bool, error) {
+	val, err := r.Execute(redisInstance, "SISMEMBER", key, member)
+	if err != nil {
+		return false, err
+	}
+	// val is interface; trying to convert to int64
+	return val.(int64) != 0, nil
+}
+
