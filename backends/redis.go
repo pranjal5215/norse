@@ -152,3 +152,16 @@ func (r *RedisStruct) MSet(redisInstance string, keyVapPair map[string]interface
 	return true, nil
 }
 
+// redis SMEMBERS 
+func (r *RedisStruct) Smembers(redisInstance string, key string) ([]string, error) {
+	val, err := redis.Values(r.Execute(redisInstance, "SMEMBERS", key))
+	if (err != nil){
+		return []string, err
+	}
+	s := make([]string, len(val))
+	//Convert array of Bytes to array of string
+	for i, item := range val {
+		s[i] = string(item.([]byte))
+	}
+	return s, nil
+}
