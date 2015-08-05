@@ -11,6 +11,7 @@ import (
 //mysql wrapper struct
 var config_map_mysql map[string]map[string]string
 var mysqlstructmap map[string]*MySqlStruct
+
 // mysqlstructmap is a map of pools
 func configureMySql() {
 	var err error
@@ -50,7 +51,7 @@ func GetMySql(incr, decr func(string) error, key, vertical string) (*MySqlStruct
 		sqlstruct.incr = incr
 		sqlstruct.decr = decr
 		sqlstruct.key = key
-	
+
 		return sqlstruct, nil
 	} else {
 		panic("vertical not present in config")

@@ -152,10 +152,10 @@ func (r *RedisStruct) MSet(redisInstance string, keyVapPair map[string]interface
 	return true, nil
 }
 
-// redis SMEMBERS 
+// redis SMEMBERS
 func (r *RedisStruct) Smembers(redisInstance string, key string) ([]string, error) {
 	val, err := redis.Values(r.Execute(redisInstance, "SMEMBERS", key))
-	if (err != nil){
+	if err != nil {
 		return []string{}, err
 	}
 	s := make([]string, len(val))
@@ -193,4 +193,3 @@ func (r *RedisStruct) Sismember(redisInstance string, key string, member string)
 	// val is interface; trying to convert to int64
 	return val.(int64) != 0, nil
 }
-

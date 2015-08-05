@@ -9,17 +9,16 @@ import (
 
 type jsonConfig map[string]interface{}
 
-
 var (
 	jsonConfigInstance jsonConfig
-	loadErr error
-	configFilePath = ""
+	loadErr            error
+	configFilePath     = ""
 )
 
 func Configure(path string) {
 	configFilePath = path
 	jsonConfigInstance, loadErr = loadConfig()
-	if loadErr != nil{
+	if loadErr != nil {
 		os.Exit(1)
 	}
 }
