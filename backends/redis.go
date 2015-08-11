@@ -26,8 +26,10 @@ var (
 	redisCtx context.Context
 )
 
+// Interface to be returned as a struct
 type RedisConnInterface interface{
 	Execute(string, string, ...interface {}) (interface {}, error)
+	Get(string, string) (string, error)
 }
 
 // Redis connection struct
@@ -41,6 +43,7 @@ type RedisStruct struct {
 	fDecr         func(string) error
 	identifierkey string
 }
+
 
 // Close redis conn
 func (rConn *RedisConn) Close() {
