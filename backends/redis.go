@@ -26,10 +26,6 @@ var (
 	redisCtx context.Context
 )
 
-type RedisConnInterface interface{
-	Execute(string, string, ...interface {}) (interface {}, error)
-}
-
 // Redis connection struct
 type RedisConn struct {
 	redis.Conn
@@ -91,7 +87,7 @@ func configureRedis() {
 }
 
 // Your instance type for redis
-func GetRedisClient(incr, decr func(string) error, identifierKey string) (RedisConnInterface, error) {
+func GetRedisClient(incr, decr func(string) error, identifierKey string) (*RedisStruct, error) {
 	if len(redisPoolMap) == 0 {
 		return nil, errors.New("Redis Not Configured, please call Configure()")
 	}
