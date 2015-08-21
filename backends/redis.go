@@ -228,3 +228,11 @@ func (r *RedisStruct) Sismembers(redisInstance string, key string, members []str
 		return nil, errors.New("Redis: instance Not found")
 	}
 }
+
+func (r *RedisStruct) Delete(redisInstance string, keys ...interface{}) (int, error) {
+	value, err := redis.Int(r.Execute(redisInstance, "DEL", keys...))
+	if err != nil {
+		return -1, err
+	}
+	return value, nil
+}
