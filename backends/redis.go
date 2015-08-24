@@ -3,9 +3,10 @@ package backends
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/net/context"
 	"os"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/goibibo/hammerpool/pool"
@@ -127,6 +128,16 @@ func (r *RedisStruct) Get(redisInstance string, key string) (string, error) {
 // Redis Set,
 func (r *RedisStruct) Set(redisInstance string, key string, value interface{}) (string, error) {
 	_, err := r.Execute(redisInstance, "SET", key, value)
+	if err != nil {
+		return "", err
+	} else {
+		return "", nil
+	}
+}
+
+// Redis SetEx
+func (r *RedisStruct) Setex(redisInstance string, key string, duration int, value interface{}) (string, error) {
+	_, err := r.Execute(redisInstance, "SETEX", key, duration, value)
 	if err != nil {
 		return "", err
 	} else {
