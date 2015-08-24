@@ -35,6 +35,20 @@ func Test_GetSet(t *testing.T) {
 	assert.Equal(t, 1, delCount, "redis del value")
 }
 
+func Test_MGetSet(t *testing.T){
+	redisClient, _ := GetRedisClient(incrFun, decrFun, "redis")
+
+  val := map[string]interface{}{ "key1": "value1", "key2": "value2","key3": "value3"}
+	_, err := redisClient.MSet("redisConfig", val)
+	assert.NoError(t, err, "redis MSet error")
+
+	value, errg := redisClient.MGet("redisConfig", "key1", "key2", "key3")
+	assert.NoError(t, errg, "redis get error")
+	assert.Equal(t, "value1", value[0], "redis get value")
+  assert.Equal(t, "value2", value[1], "redis get value")
+	assert.Equal(t, "value3", value[2], "redis get value")
+}
+
 func Test_Execute(t *testing.T) {
 	redisClient, _ := GetRedisClient(incrFun, decrFun, "redis")
 
