@@ -12,6 +12,10 @@ import (
 var config_map_mysql map[string]map[string]string
 var mysqlstructmap map[string]*MySqlStruct
 
+func init() {
+	mysqlstructmap = make(map[string]*MySqlStruct)
+}
+
 // mysqlstructmap is a map of pools
 func configureMySql() {
 	var err error

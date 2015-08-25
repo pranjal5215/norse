@@ -3,9 +3,10 @@ package backends
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/net/context"
 	"os"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/goibibo/hammerpool/pool"
@@ -133,6 +134,16 @@ func (r *RedisStruct) Set(redisInstance string, key string, value interface{}) (
 	}
 }
 
+// Redis SetEx
+func (r *RedisStruct) Setex(redisInstance string, key string, duration int, value interface{}) (string, error) {
+	_, err := r.Execute(redisInstance, "SETEX", key, duration, value)
+	if err != nil {
+		return "", err
+	} else {
+		return "", nil
+	}
+}
+
 // Redis MGet
 func (r *RedisStruct) MGet(redisInstance string, keys ...interface{}) ([]string, error) {
 	values, err := redis.Strings(r.Execute(redisInstance, "MGET", keys...))
@@ -191,4 +202,47 @@ func (r *RedisStruct) Sismember(redisInstance string, key string, member string)
 	}
 	// val is interface; trying to convert to int64
 	return val.(int64) != 0, nil
+}
+
+func (r *RedisStruct) Sismembers(redisInstance string, key string, members []string) ([]bool, error) {
+
+	// Get and set in our pool; for redis we use our own pool
+	pool, ok := redisPoolMap[redisInstance]
+	// Increment and decrement counters using user specified functions.
+	if ok {
+		conn, err := pool.Get(redisCtx)
+		if err != nil {
+			return nil, err
+		}
+		r.fIncr(r.identifierkey)
+		defer r.fDecr(r.identifierkey)
+		defer pool.Put(conn)
+
+		for _, member := range members {
+			conn.(*RedisConn).Send("SISMEMBER", key, member)
+		}
+		conn.(*RedisConn).Flush()
+
+		results := make([]bool, 0, len(members))
+		for _, _ = range members {
+			res, err := conn.(*RedisConn).Receive()
+			if err != nil {
+				return nil, err
+			}
+			val := res.(int64) != 0
+			results = append(results, val)
+		}
+		return results, nil
+
+	} else {
+		return nil, errors.New("Redis: instance Not found")
+	}
+}
+
+func (r *RedisStruct) Delete(redisInstance string, keys ...interface{}) (int, error) {
+	value, err := redis.Int(r.Execute(redisInstance, "DEL", keys...))
+	if err != nil {
+		return -1, err
+	}
+	return value, nil
 }
