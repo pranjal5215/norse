@@ -214,8 +214,8 @@ func (r *RedisStruct) Sismembers(redisInstance string, key string, members []str
 		if err != nil {
 			return nil, err
 		}
-		r.fIncr(r.identifierkey)
-		defer r.fDecr(r.identifierkey)
+		r.fIncr(redisInstance)
+		defer r.fDecr(redisInstance)
 		defer pool.Put(conn)
 
 		for _, member := range members {
