@@ -22,7 +22,7 @@ func init() {
 }
 
 func Test_GetSet(t *testing.T) {
-	redisClient, _ := GetRedisClient(incrFun, decrFun, "redis")
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
 
 	_, err := redisClient.Set("redisConfig", "key", "value")
 	assert.NoError(t, err, "redis set error")
@@ -39,7 +39,7 @@ func Test_GetSet(t *testing.T) {
 }
 
 func Test_MGetSet(t *testing.T) {
-	redisClient, _ := GetRedisClient(incrFun, decrFun, "redis")
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
 
 	val := map[string]interface{}{"key1": "value1", "key2": "value2", "key3": "value3"}
 	_, err := redisClient.MSet("redisConfig", val)
@@ -55,7 +55,7 @@ func Test_MGetSet(t *testing.T) {
 }
 
 func Test_Execute(t *testing.T) {
-	redisClient, _ := GetRedisClient(incrFun, decrFun, "redis")
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
 
 	_, err := redisClient.Execute("redisConfig", "SET", "key", "value")
 	assert.NoError(t, err, "redis set error")
@@ -76,7 +76,7 @@ func Test_Execute(t *testing.T) {
 }
 
 func Test_Sets(t *testing.T) {
-	redisClient, _ := GetRedisClient(incrFun, decrFun, "redis")
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
 
 	saddb, err := redisClient.SAdd("redisConfig", "set", "ele1", "ele2", "ele3", "ele4")
 	assert.Equal(t, true, saddb, "sadd")
@@ -106,7 +106,7 @@ func Test_Sets(t *testing.T) {
 }
 
 func Test_Sets2(t *testing.T) {
-	redisClient, _ := GetRedisClient(incrFun, decrFun, "redis")
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
 
 	saddb, err := redisClient.SAdd("redisConfig", "set", "ele1", "ele2", "ele3", "ele4")
 	assert.Equal(t, true, saddb, "sadd")
