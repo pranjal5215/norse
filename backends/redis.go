@@ -33,9 +33,8 @@ type RedisConn struct {
 
 // All operations on redis from client happen through this struct
 type RedisStruct struct {
-	fIncr         func(string) error
-	fDecr         func(string) error
-	identifierkey string
+	fIncr func(string) error
+	fDecr func(string) error
 }
 
 // Close redis conn
@@ -43,7 +42,7 @@ func (rConn *RedisConn) Close() {
 	_ = rConn.Conn.Close()
 }
 
-// Callback function factory to vitess pool`
+// Callback function factory to vitess pool
 func redisFactory(key string, config map[string]string) (pool.Resource, error) {
 	host := config["host"]
 	port := config["port"]
@@ -87,11 +86,11 @@ func configureRedis() {
 }
 
 // Your instance type for redis
-func GetRedisClient(incr, decr func(string) error, identifierKey string) (*RedisStruct, error) {
+func GetRedisClient(incr, decr func(string) error) (*RedisStruct, error) {
 	if len(redisPoolMap) == 0 {
 		return nil, errors.New("Redis Not Configured, please call Configure()")
 	}
-	return &RedisStruct{incr, decr, identifierKey}, nil
+	return &RedisStruct{incr, decr}, nil
 }
 
 // Execute, get connection from a pool
@@ -105,8 +104,8 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 		if err != nil {
 			return nil, err
 		}
-		r.fIncr(r.identifierkey)
-		defer r.fDecr(r.identifierkey)
+		r.fIncr(redisInstance)
+		defer r.fDecr(redisInstance)
 		defer pool.Put(conn)
 		return conn.(*RedisConn).Do(cmd, args...)
 	} else {
