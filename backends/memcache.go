@@ -32,9 +32,8 @@ type MemcacheConn struct {
 
 // All operations on memcache from client happen through this struct
 type MemcacheStruct struct {
-	fIncr         func(string) error
-	fDecr         func(string) error
-	identifierkey string
+	fIncr func(string) error
+	fDecr func(string) error
 }
 
 // Close memcache conn
@@ -71,11 +70,11 @@ func configureMemcache() {
 }
 
 // Your instance type for memcache
-func GetMemcacheClient(incr, decr func(string) error, identifierKey string) (*MemcacheStruct, error) {
+func GetMemcacheClient(incr, decr func(string) error) (*MemcacheStruct, error) {
 	if len(memPoolMap) == 0 {
 		return nil, errors.New("Memcache is not configured, please call Configure()")
 	}
-	return &MemcacheStruct{incr, decr, identifierKey}, nil
+	return &MemcacheStruct{incr, decr}, nil
 }
 
 // Memcache Get,
@@ -83,8 +82,8 @@ func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey)
-	defer m.fDecr(m.identifierkey)
+	m.fIncr(memcacheInstance)
+	defer m.fDecr(memcacheInstance)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
@@ -103,8 +102,8 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey)
-	defer m.fDecr(m.identifierkey)
+	m.fIncr(memcacheInstance)
+	defer m.fDecr(memcacheInstance)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
@@ -120,8 +119,8 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey)
-	defer m.fDecr(m.identifierkey)
+	m.fIncr(memcacheInstance)
+	defer m.fDecr(memcacheInstance)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)
@@ -144,8 +143,8 @@ func (m *MemcacheStruct) Expire(memcacheInstance string, key string, duration in
 	// Get and set in our pool; for memcache we use our own pool
 	pool, ok := memPoolMap[memcacheInstance]
 	// Increment and decrement counters using user specified functions.
-	m.fIncr(m.identifierkey)
-	defer m.fDecr(m.identifierkey)
+	m.fIncr(memcacheInstance)
+	defer m.fDecr(memcacheInstance)
 	if ok {
 		conn, _ := pool.Get(memCtx)
 		defer pool.Put(conn)

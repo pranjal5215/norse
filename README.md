@@ -23,13 +23,13 @@ See config file in gist [here](https://gist.github.com/pranjal5215/cb8977317023f
 		backends.Configure()
 
 		// How to use redis,
-		redisClient, _ := norse.GetRedisClient(incrFun, decrFun, "redis")
+		redisClient, _ := norse.GetRedisClient(incrFun, decrFun)
 		value, _ := redisClient.Get("redisConfig", "key"))
 		fmt.Println(value)
 
 
 		// How to use memcache,
-		memcacheClient, _ := norse.GetMemcacheClient(incrFun, decrFun, "memcache")
+		memcacheClient, _ := norse.GetMemcacheClient(incrFun, decrFun)
 		value, _ := memcacheClient.Get("configType", "key"))
 		fmt.Println(value)
 
