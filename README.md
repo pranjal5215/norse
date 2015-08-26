@@ -36,8 +36,8 @@ See config file in gist [here](https://gist.github.com/pranjal5215/cb8977317023f
 
 		// How to use MySQL,
 		mysqlClient :=norse.GetMysqlClient(incrFunc,decrFunc,"mysql")
-		// "mysql" database name; 
-		mysqlmap := mysqlClient.Select("mysql","select * from mytable")	
+		// "mysql" database name;
+		mysqlmap := mysqlClient.Select("select * from mytable")	
 		fmt.Println(mysqlmap)
-		
+
 	}
