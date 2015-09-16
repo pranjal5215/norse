@@ -134,6 +134,26 @@ func (r *RedisStruct) Set(redisInstance string, key string, value interface{}) (
 	}
 }
 
+// Redis HMGet,
+func (r *RedisStruct) HMGet(redisInstance string, keys ...interface{}) ([]string, error) {
+    values, err := redis.Strings(r.Execute(redisInstance, "HMGET", keys...))
+    if err != nil {
+            return []string{}, err
+    } else {
+            return values, err
+    }
+}
+
+// Redis HMSet,
+func (r *RedisStruct) HMSet(redisInstance string, key string, keyVapPair map[string]string) (bool, error) {
+    _, err := r.Execute(redisInstance, "HMSET", redis.Args{key}.AddFlat(keyVapPair)...)
+    if err != nil {
+            return false, err
+    } else {
+            return true, nil
+    }
+}
+
 // Redis SetEx
 func (r *RedisStruct) Setex(redisInstance string, key string, duration int, value interface{}) (string, error) {
 	_, err := r.Execute(redisInstance, "SETEX", key, duration, value)
