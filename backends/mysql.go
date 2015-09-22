@@ -81,7 +81,6 @@ func decr(s string, i int64) error {
 func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 
 	var err error
-	defer m.Close()
 	rows, err := m.Execute(query)
 	if err != nil {
 		fmt.Println(err)
