@@ -136,22 +136,22 @@ func (r *RedisStruct) Set(redisInstance string, key string, value interface{}) (
 
 // Redis HMGet,
 func (r *RedisStruct) HMGet(redisInstance string, keys ...interface{}) ([]string, error) {
-    values, err := redis.Strings(r.Execute(redisInstance, "HMGET", keys...))
-    if err != nil {
-            return []string{}, err
-    } else {
-            return values, err
-    }
+	values, err := redis.Strings(r.Execute(redisInstance, "HMGET", keys...))
+	if err != nil {
+		return []string{}, err
+	} else {
+		return values, err
+	}
 }
 
 // Redis HMSet,
 func (r *RedisStruct) HMSet(redisInstance string, key string, keyVapPair map[string]string) (bool, error) {
-    _, err := r.Execute(redisInstance, "HMSET", redis.Args{key}.AddFlat(keyVapPair)...)
-    if err != nil {
-            return false, err
-    } else {
-            return true, nil
-    }
+	_, err := r.Execute(redisInstance, "HMSET", redis.Args{key}.AddFlat(keyVapPair)...)
+	if err != nil {
+		return false, err
+	} else {
+		return true, nil
+	}
 }
 
 // Redis SetEx
@@ -265,4 +265,49 @@ func (r *RedisStruct) Delete(redisInstance string, keys ...interface{}) (int, er
 		return -1, err
 	}
 	return value, nil
+}
+
+//Redis LPUSH
+func (r *RedisStruct) LPush(redisInstance string, key string, value interface{}) (bool, error) {
+	_, err := r.Execute(redisInstance, "LPUSH", key, value)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+//Redis ZRANGE
+func (r *RedisStruct) ZRange(redisInstance string, key string, start, end int) ([]string, error) {
+	value, err := redis.Strings(r.Execute(redisInstance, "ZRANGE", key, start, end))
+	if err != nil {
+		return []string{}, err
+	}
+	return value, nil
+}
+
+//Redis ZRANGE with scores
+func (r *RedisStruct) ZRangeWithScores(redisInstance string, key string, start, end int) ([]string, error) {
+	value, err := redis.Strings(r.Execute(redisInstance, "ZRANGE", start, end, "withscores"))
+	if err != nil {
+		return []string{}, err
+	}
+	return value, nil
+}
+
+//Redis ZADD
+func (r *RedisStruct) ZAdd(redisInstance string, key string, score int, member string) (bool, error) {
+	_, err := r.Execute(redisInstance, "ZADD", key, score, member)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+//Redis ZREM
+func (r *RedisStruct) ZRem(redisInstance string, key string, member string) (bool, error) {
+	_, err := r.Execute(redisInstance, "ZREM", key, member)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
