@@ -268,12 +268,23 @@ func (r *RedisStruct) Delete(redisInstance string, keys ...interface{}) (int, er
 }
 
 //Redis LPUSH
-func (r *RedisStruct) LPush(redisInstance string, key string, value interface{}) (bool, error) {
-	_, err := r.Execute(redisInstance, "LPUSH", key, value)
+func (r *RedisStruct) LPush(redisInstance string, key string, values ...interface{}) (bool, error) {
+	inter := []interface{}{key}
+	inter = append(inter, values...)
+	_, err := r.Execute(redisInstance, "LPUSH", inter...)
 	if err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+//Redis LRANGE
+func (r *RedisStruct) LRange(redisInstance string, key string, start, end int) ([]string, error) {
+	list, err := redis.Strings(r.Execute(redisInstance, "LRANGE", key, start, end))
+	if err != nil {
+		return []string{}, err
+	}
+	return list, nil
 }
 
 //Redis ZRANGE
@@ -287,7 +298,7 @@ func (r *RedisStruct) ZRange(redisInstance string, key string, start, end int) (
 
 //Redis ZRANGE with scores
 func (r *RedisStruct) ZRangeWithScores(redisInstance string, key string, start, end int) ([]string, error) {
-	value, err := redis.Strings(r.Execute(redisInstance, "ZRANGE", start, end, "withscores"))
+	value, err := redis.Strings(r.Execute(redisInstance, "ZRANGE", key, start, end, "withscores"))
 	if err != nil {
 		return []string{}, err
 	}
