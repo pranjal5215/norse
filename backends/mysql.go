@@ -3,9 +3,10 @@ package backends
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/goibibo/norse/config"
-	"time"
 )
 
 //mysql wrapper struct
@@ -49,12 +50,12 @@ func (m *MySqlStruct) Close() {
 }
 
 // Your instance type for mysql
-func GetMySql(incr, decr func(string) error, key, vertical string) (*MySqlStruct, error) {
+func GetMysqlClient(incr, decr func(string) error, vertical string) (*MySqlStruct, error) {
 	sqlstruct, present := mysqlstructmap[vertical]
 	if present {
 		sqlstruct.incr = incr
 		sqlstruct.decr = decr
-		sqlstruct.key = key
+		sqlstruct.key = vertical
 
 		return sqlstruct, nil
 	} else {
@@ -80,7 +81,6 @@ func decr(s string, i int64) error {
 func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 
 	var err error
-	defer m.Close()
 	rows, err := m.Execute(query)
 	if err != nil {
 		fmt.Println(err)

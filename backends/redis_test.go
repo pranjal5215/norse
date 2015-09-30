@@ -54,6 +54,19 @@ func Test_MGetSet(t *testing.T) {
 	redisClient.Execute("redisConfig", "FLUSHDB")
 }
 
+func Test_HMGetSet(t *testing.T) {
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
+	val := map[string]string{"key1": "value1", "key2": "value2", "key3": "value3"}
+        _, err := redisClient.HMSet("redisConfig", "key", val)
+	assert.NoError(t, err, "redis HMSet error")
+
+	value, errg := redisClient.HMGet("redisConfig", "key", "key1")
+	assert.NoError(t, errg, "redis get error")
+	assert.Equal(t, "value1", value[0], "redis get value")
+
+	redisClient.Execute("redisConfig", "FLUSHDB")
+}
+
 func Test_Execute(t *testing.T) {
 	redisClient, _ := GetRedisClient(incrFun, decrFun)
 
