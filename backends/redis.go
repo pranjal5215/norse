@@ -48,7 +48,7 @@ func redisFactory(key string, config map[string]string) (pool.Resource, error) {
 	host := config["host"]
 	port := config["port"]
 	redisString := fmt.Sprintf("%s:%s", host, port)
-	cli, err := redis.Dial("tcp", redisString)
+	cli, err := redis.Dial("tcp", redisString, redis.DialReadTimeout(time.Second), redis.DialWriteTimeout(time.Second))
 	// select default db if not specified
 	db, ok := config["db"]
 	if ok {
@@ -136,22 +136,22 @@ func (r *RedisStruct) Set(redisInstance string, key string, value interface{}) (
 
 // Redis HMGet,
 func (r *RedisStruct) HMGet(redisInstance string, keys ...interface{}) ([]string, error) {
-    values, err := redis.Strings(r.Execute(redisInstance, "HMGET", keys...))
-    if err != nil {
-            return []string{}, err
-    } else {
-            return values, err
-    }
+	values, err := redis.Strings(r.Execute(redisInstance, "HMGET", keys...))
+	if err != nil {
+		return []string{}, err
+	} else {
+		return values, err
+	}
 }
 
 // Redis HMSet,
 func (r *RedisStruct) HMSet(redisInstance string, key string, keyVapPair map[string]string) (bool, error) {
-    _, err := r.Execute(redisInstance, "HMSET", redis.Args{key}.AddFlat(keyVapPair)...)
-    if err != nil {
-            return false, err
-    } else {
-            return true, nil
-    }
+	_, err := r.Execute(redisInstance, "HMSET", redis.Args{key}.AddFlat(keyVapPair)...)
+	if err != nil {
+		return false, err
+	} else {
+		return true, nil
+	}
 }
 
 // Redis SetEx
