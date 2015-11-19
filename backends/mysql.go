@@ -115,7 +115,7 @@ func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 					record[columns[i]] = col.(float64)
 				case string:
 					record[columns[i]] = col.(string)
-				case []byte: // -- all cases go HERE!
+				case []byte:
 					record[columns[i]] = string(col.([]byte))
 				case time.Time:
 					record[columns[i]] = col.(string)
