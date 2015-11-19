@@ -147,3 +147,87 @@ func Test_Sets2(t *testing.T) {
 
 	redisClient.Execute("redisConfig", "FLUSHDB")
 }
+
+func Test_SortedSets(t *testing.T) {
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
+
+	zaddb, err := redisClient.ZAdd("redisConfig", "sortedSet", 10000, "mem1")
+	assert.Equal(t, true, zaddb, "zadd")
+	assert.NoError(t, err, "zadd error")
+
+	//zrem
+	remB, err1 := redisClient.ZRem("redisConfig", "sortedSet", "mem1")
+	assert.Equal(t, true, remB, "zrem")
+	assert.NoError(t, err1, "error in zrem")
+
+	zaddb, err = redisClient.ZAdd("redisConfig", "sortedSet", 10000, "mem2")
+	assert.Equal(t, true, zaddb, "zadd")
+	assert.NoError(t, err, "zadd error")
+
+	zaddb, err = redisClient.ZAdd("redisConfig", "sortedSet", 11000, "mem3")
+	assert.Equal(t, true, zaddb, "zadd")
+	assert.NoError(t, err, "zadd error")
+
+	zaddb, err = redisClient.ZAdd("redisConfig", "sortedSet", 10100, "mem4")
+	assert.Equal(t, true, zaddb, "zadd")
+	assert.NoError(t, err, "zadd error")
+
+	zaddb, err = redisClient.ZAdd("redisConfig", "sortedSet", 12000, "mem5")
+	assert.Equal(t, true, zaddb, "zadd")
+	assert.NoError(t, err, "zadd error")
+
+	//zrange
+	zrangeStr, err2 := redisClient.ZRange("redisConfig", "sortedSet", 0, -1)
+	assert.Equal(t, []string{"mem2", "mem4", "mem3", "mem5"}, zrangeStr, "zrange")
+	assert.NoError(t, err2, "zrange error")
+
+	zrangeStr, err2 = redisClient.ZRange("redisConfig", "sortedSet", 0, 0)
+	assert.Equal(t, []string{"mem2"}, zrangeStr, "zrange 1st element")
+	assert.NoError(t, err2, "zrange error")
+
+	zrangeStr, err2 = redisClient.ZRange("redisConfig", "sortedSet", 0, 10)
+	assert.Equal(t, []string{"mem2", "mem4", "mem3", "mem5"}, zrangeStr, "zrange top (10 or all) elements")
+	assert.NoError(t, err2, "zrange error")
+
+	zrangeStr, err2 = redisClient.ZRange("redisConfig", "sortedSetNotExists", 0, 0)
+	assert.Equal(t, []string{}, zrangeStr, "zrange when set doesn't exist")
+	assert.NoError(t, err2, "zrange error")
+
+	//zrange withscores
+	zrangeWS, err3 := redisClient.ZRangeWithScores("redisConfig", "sortedSet", 0, -1)
+	assert.Equal(t, []string{"mem2", "10000", "mem4", "10100", "mem3", "11000", "mem5", "12000"}, zrangeWS, "zrange withscores")
+	assert.NoError(t, err3, "zrange withscores error")
+
+	zrangeWS, err3 = redisClient.ZRangeWithScores("redisConfig", "sortedSet", 0, 0)
+	assert.Equal(t, []string{"mem2", "10000"}, zrangeWS, "zrange withscores 1st element")
+	assert.NoError(t, err3, "zrange withscores error")
+
+	zrangeWS, err3 = redisClient.ZRangeWithScores("redisConfig", "sortedSetNotExists", 0, -1)
+	assert.Equal(t, []string{}, zrangeWS, "zrange withscores when sorted set doesn't exist in cache")
+	assert.NoError(t, err3, "zrange withscores error")
+
+	redisClient.Execute("redisConfig", "FLUSHDB")
+}
+
+func Test_Lists(t *testing.T) {
+	redisClient, _ := GetRedisClient(incrFun, decrFun)
+
+	//LPUSH
+	lpushB, err := redisClient.LPush("redisConfig", "testList", "val1", "val2", "val3", "val4")
+	assert.Equal(t, true, lpushB, "lpush multiple elements")
+	assert.NoError(t, err, "lpush error")
+
+	lpushB, err = redisClient.LPush("redisConfig", "testList", "valNew")
+	assert.Equal(t, true, lpushB, "lpush to existing list")
+	assert.NoError(t, err, "lpush error")
+
+	//LRANGE
+	lrangeStr, err1 := redisClient.LRange("redisConfig", "testList", 0, 0)
+	assert.Equal(t, []string{"valNew"}, lrangeStr, "lrange leftmost element")
+	assert.NoError(t, err1, "lrange error")
+
+	lrangeStr, err1 = redisClient.LRange("redisConfig", "testList", 0, -1)
+	assert.Equal(t, []string{"valNew", "val4", "val3", "val2", "val1"}, lrangeStr, "lrange all elements in list")
+	assert.NoError(t, err1, "lrange error")
+
+}
