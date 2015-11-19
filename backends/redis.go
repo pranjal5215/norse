@@ -48,7 +48,7 @@ func redisFactory(key string, config map[string]string) (pool.Resource, error) {
 	host := config["host"]
 	port := config["port"]
 	redisString := fmt.Sprintf("%s:%s", host, port)
-	cli, err := redis.Dial("tcp", redisString)
+	cli, err := redis.Dial("tcp", redisString, redis.DialReadTimeout(time.Second), redis.DialWriteTimeout(time.Second))
 	// select default db if not specified
 	db, ok := config["db"]
 	if ok {
