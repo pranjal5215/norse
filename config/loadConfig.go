@@ -7,6 +7,10 @@ import (
 	"os"
 )
 
+var IsRedisConfigured bool
+var IsMemcacheConfigured bool
+var IsMysqlConfigured bool
+
 type jsonConfig map[string]interface{}
 
 var (
@@ -21,6 +25,9 @@ func Configure(path string) {
 	if loadErr != nil {
 		os.Exit(1)
 	}
+	_, IsRedisConfigured = jsonConfigInstance["redis"]
+	_, IsMemcacheConfigured = jsonConfigInstance["memcache"]
+	_, IsMysqlConfigured = jsonConfigInstance["mysql"]
 }
 
 // Load files from general config
