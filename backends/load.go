@@ -1,6 +1,7 @@
 package backends
 
 import (
+	"github.com/goibibo/norse/config"
 	"sync"
 )
 
@@ -15,7 +16,14 @@ func Configure() {
 }
 
 func doConfigure() {
-	configureRedis()
-	configureMemcache()
-	configureMySql()
+
+	if config.IsRedisConfigured != false {
+		configureRedis()
+	}
+	if config.IsMemcacheConfigured {
+		configureMemcache()
+	}
+	if config.IsMysqlConfigured {
+		configureMySql()
+	}
 }
