@@ -280,3 +280,59 @@ func (r *RedisStruct) Delete(redisInstance string, keys ...interface{}) (int, er
 	}
 	return value, nil
 }
+
+//Redis LPUSH
+func (r *RedisStruct) LPush(redisInstance string, key string, values ...interface{}) (bool, error) {
+	inter := []interface{}{key}
+	inter = append(inter, values...)
+	_, err := r.Execute(redisInstance, "LPUSH", inter...)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+//Redis LRANGE
+func (r *RedisStruct) LRange(redisInstance string, key string, start, end int) ([]string, error) {
+	list, err := redis.Strings(r.Execute(redisInstance, "LRANGE", key, start, end))
+	if err != nil {
+		return []string{}, err
+	}
+	return list, nil
+}
+
+//Redis ZRANGE
+func (r *RedisStruct) ZRange(redisInstance string, key string, start, end int) ([]string, error) {
+	value, err := redis.Strings(r.Execute(redisInstance, "ZRANGE", key, start, end))
+	if err != nil {
+		return []string{}, err
+	}
+	return value, nil
+}
+
+//Redis ZRANGE with scores
+func (r *RedisStruct) ZRangeWithScores(redisInstance string, key string, start, end int) ([]string, error) {
+	value, err := redis.Strings(r.Execute(redisInstance, "ZRANGE", key, start, end, "withscores"))
+	if err != nil {
+		return []string{}, err
+	}
+	return value, nil
+}
+
+//Redis ZADD
+func (r *RedisStruct) ZAdd(redisInstance string, key string, score int, member string) (bool, error) {
+	_, err := r.Execute(redisInstance, "ZADD", key, score, member)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+//Redis ZREM
+func (r *RedisStruct) ZRem(redisInstance string, key string, member string) (bool, error) {
+	_, err := r.Execute(redisInstance, "ZREM", key, member)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
