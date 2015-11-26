@@ -261,6 +261,11 @@ func (r *RedisStruct) Sismembers(redisInstance string, key string, members []str
 		for _, _ = range members {
 			res, err := conn.(*RedisConn).Receive()
 			if err != nil {
+				if isNetworkError(err) {
+					pool.Put(nil)
+				} else {
+					pool.Put(conn)
+				}
 				return nil, err
 			}
 			val := res.(int64) != 0
