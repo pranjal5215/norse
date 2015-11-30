@@ -72,7 +72,7 @@ func configureRedis() {
 	// For each type in redis create corresponding pool
 	redisCtx = context.Background()
 	redisPoolMap = make(map[string]*pool.ResourcePool)
-	milliSecTimeout = 5000
+	milliSecTimeout = 1000
 	redisConfigs, err := config.LoadRedisConfig()
 	if err != nil {
 		os.Exit(1)
@@ -102,6 +102,50 @@ func GetRedisClient(incr, decr func(string) error) (*RedisStruct, error) {
 	}
 	return &RedisStruct{incr, decr}, nil
 }
+
+/*-------------------------------------------------------------------------------------------
+Pipelined Commands
+*/
+
+func (r *RedisStruct) GetConn(redisInstance string) (*RedisConn, error) {
+	// Get and set in our pool; for redis we use our own pool
+	pool, ok := redisPoolMap[redisInstance]
+	// Increment and decrement counters using user specified functions.
+	if ok {
+		conn, err := pool.Get(redisCtx)
+		if err != nil {
+			return nil, err
+		}
+		r.fIncr(redisInstance)
+		return conn.(*RedisConn), nil
+	} else {
+		return nil, errors.New("Redis: instance Not found")
+	}
+}
+
+func (r *RedisStruct) Pipe(conn *RedisConn, cmd string, args ...interface{}) error {
+	return conn.Send(cmd, args...)
+}
+
+func (r *RedisStruct) PipeNFlush(redisInstance string, conn *RedisConn, cmd string, args ...interface{}) (interface{}, error) {
+	defer r.fDecr(redisInstance) // Yikes! TODO dont decrement if not incr
+
+	pool, ok := redisPoolMap[redisInstance]
+	if !ok {
+		return nil, errors.New("Pool get error")
+	}
+
+	ret, ferr := redis.String(conn.Do(cmd, args...))
+	if isNetworkError(ferr) {
+		pool.Put(nil)
+	} else {
+		pool.Put(conn)
+	}
+	return ret, ferr
+}
+
+/*-------------------------------------------------------------------------------------------
+ */
 
 // Execute, get connection from a pool
 // fetch and return connection to a pool.
