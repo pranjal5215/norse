@@ -3,6 +3,8 @@ package backends
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net"
 	"os"
 	"time"
 
@@ -82,8 +84,15 @@ func configureRedis() {
 			}
 		}
 		t := time.Duration(time.Duration(milliSecTimeout) * time.Millisecond)
-		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 100, t)
+		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 100, 100, t)
 	}
+}
+
+func isNetworkError(err error) bool {
+	if _, ok := err.(net.Error); ok || err == io.EOF {
+		return true
+	}
+	return false
 }
 
 // Your instance type for redis
@@ -107,8 +116,13 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 		}
 		r.fIncr(redisInstance)
 		defer r.fDecr(redisInstance)
-		defer pool.Put(conn)
-		return conn.(*RedisConn).Do(cmd, args...)
+		ret, ferr := conn.(*RedisConn).Do(cmd, args...)
+		if isNetworkError(ferr) {
+			pool.Put(nil)
+		} else {
+			pool.Put(conn)
+		}
+		return ret, ferr
 	} else {
 		return nil, errors.New("Redis: instance Not found")
 	}
