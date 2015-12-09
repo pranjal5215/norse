@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/goibibo/hammerpool/pool"
+	pool "github.com/goibibo/minimal_vitess_pool/pools"
 	"github.com/goibibo/norse/config"
 )
 
@@ -84,7 +84,7 @@ func configureRedis() {
 			}
 		}
 		t := time.Duration(time.Duration(milliSecTimeout) * time.Millisecond)
-		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 100, 100, t)
+		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 50, t)
 	}
 }
 
@@ -112,7 +112,7 @@ func (r *RedisStruct) GetConn(redisInstance string) (*RedisConn, error) {
 	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
 	if ok {
-		conn, err := pool.Get(redisCtx)
+		conn, err := pool.Get(time.Second)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
 	if ok {
-		conn, err := pool.Get(redisCtx)
+		conn, err := pool.Get(time.Second)
 		if err != nil {
 			return nil, err
 		}
@@ -288,7 +288,7 @@ func (r *RedisStruct) Sismembers(redisInstance string, key string, members []str
 	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
 	if ok {
-		conn, err := pool.Get(redisCtx)
+		conn, err := pool.Get(time.Second)
 		if err != nil {
 			return nil, err
 		}
