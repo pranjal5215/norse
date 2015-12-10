@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/goibibo/gomemcache/memcache"
-	"github.com/goibibo/hammerpool/pool"
+	pool "github.com/goibibo/minimal_vitess_pool/pools"
 	"github.com/goibibo/norse/config"
 )
 
@@ -85,7 +85,7 @@ func (m *MemcacheStruct) Get(memcacheInstance string, key string) (string, error
 	m.fIncr(memcacheInstance)
 	defer m.fDecr(memcacheInstance)
 	if ok {
-		conn, _ := pool.Get(memCtx)
+		conn, _ := pool.Get(time.Second)
 		defer pool.Put(conn)
 		value, err := conn.(*MemcacheConn).Get(key)
 		if err != nil {
@@ -105,7 +105,7 @@ func (m *MemcacheStruct) Set(memcacheInstance string, key string, value string) 
 	m.fIncr(memcacheInstance)
 	defer m.fDecr(memcacheInstance)
 	if ok {
-		conn, _ := pool.Get(memCtx)
+		conn, _ := pool.Get(time.Second)
 		defer pool.Put(conn)
 		byteArr := []byte(value)
 		conn.(*MemcacheConn).Set(&memcache.Item{Key: key, Value: byteArr})
@@ -122,7 +122,7 @@ func (m *MemcacheStruct) Setex(memcacheInstance string, key string, duration int
 	m.fIncr(memcacheInstance)
 	defer m.fDecr(memcacheInstance)
 	if ok {
-		conn, _ := pool.Get(memCtx)
+		conn, _ := pool.Get(time.Second)
 		defer pool.Put(conn)
 		resp := conn.(*MemcacheConn).Set(&memcache.Item{Key: key, Value: []byte(val)})
 		if resp != nil {
@@ -146,7 +146,7 @@ func (m *MemcacheStruct) Expire(memcacheInstance string, key string, duration in
 	m.fIncr(memcacheInstance)
 	defer m.fDecr(memcacheInstance)
 	if ok {
-		conn, _ := pool.Get(memCtx)
+		conn, _ := pool.Get(time.Second)
 		defer pool.Put(conn)
 		err := conn.(*MemcacheConn).Touch(key, int32(duration))
 		if err != nil {
