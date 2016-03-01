@@ -95,6 +95,10 @@ func configureRedis() {
                 	MaxIdle: 20,
                 	MaxActive: 40, // max number of connections
                 	Dial: factoryFunc(key,config),
+			TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			 _, err := c.Do("PING")
+			 return err
+			 },
         	}
 	
 	}
