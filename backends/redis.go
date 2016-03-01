@@ -138,10 +138,10 @@ func (r *RedisStruct) Pipe(conn *RedisConn, cmd string, args ...interface{}) err
 func (r *RedisStruct) PipeNFlush(redisInstance string, conn *RedisConn, cmd string, args ...interface{}) (interface{}, error) {
 	defer r.fDecr(redisInstance) // Yikes! TODO dont decrement if not incr
 
-	pool, ok := redisPoolMap[redisInstance]
-	if !ok {
-		return nil, errors.New("Pool get error")
-	}
+	//pool, ok := redisPoolMap[redisInstance]
+//	if !ok {
+//		return nil, errors.New("Pool get error")
+//	}
 
 	ret, ferr := redis.String(conn.Do(cmd, args...))
 	//if isNetworkError(ferr) {
