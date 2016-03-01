@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/garyburd/redigo/redis"
-	pool "github.com/goibibo/minimal_vitess_pool/pools"
+//	pool "github.com/goibibo/minimal_vitess_pool/pools"
 	"github.com/goibibo/norse/config"
 )
 
@@ -23,7 +23,7 @@ var (
 	milliSecTimeout int
 
 	// type closureFunc func() (pool.Resource ,error)
-	redisPoolMap map[string]*pool.ResourcePool
+	redisPoolMap map[string]*redis.Pool
 
 	// context var to vitess pool
 	redisCtx context.Context
@@ -46,7 +46,7 @@ func (rConn *RedisConn) Close() {
 }
 
 // Callback function factory to vitess pool
-func redisFactory(key string, config map[string]string) (pool.Resource, error) {
+func redisFactory(key string, config map[string]string) (redis.Conn, error) {
 	host := config["host"]
 	port := config["port"]
 	redisString := fmt.Sprintf("%s:%s", host, port)
@@ -62,8 +62,7 @@ func redisFactory(key string, config map[string]string) (pool.Resource, error) {
 		// Write exit
 		fmt.Println("Error in Redis Dial")
 	}
-	res := &RedisConn{cli}
-	return res, nil
+	return cli, nil
 }
 
 // Specify a factory function to create a connection,
@@ -71,20 +70,29 @@ func redisFactory(key string, config map[string]string) (pool.Resource, error) {
 func configureRedis() {
 	// For each type in redis create corresponding pool
 	redisCtx = context.Background()
-	redisPoolMap = make(map[string]*pool.ResourcePool)
+	redisPoolMap = make(map[string]*redis.Pool)
 	milliSecTimeout = 1000
 	redisConfigs, err := config.LoadRedisConfig()
 	if err != nil {
 		os.Exit(1)
 	}
 	for key, config := range redisConfigs {
-		factoryFunc := func(key string, config map[string]string) pool.Factory {
+	/*	factoryFunc := func(key string, config map[string]string) pool.Factory {
 			return func() (pool.Resource, error) {
 				return redisFactory(key, config)
 			}
 		}
 		t := time.Duration(time.Duration(milliSecTimeout) * time.Millisecond)
 		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 50, t)
+	*/
+		redisPoolMap[key] = &redis.Pool{
+                	MaxIdle: 80,
+                	MaxActive: 12000, // max number of connections
+                	Dial: func()(redis.Conn,error){
+				return redisFactory(key,config)
+			},
+        	}
+	
 	}
 }
 
@@ -107,17 +115,17 @@ func GetRedisClient(incr, decr func(string) error) (*RedisStruct, error) {
 Pipelined Commands
 */
 
-func (r *RedisStruct) GetConn(redisInstance string) (*RedisConn, error) {
+func (r *RedisStruct) GetConn(redisInstance string) (redis.Conn, error) {
 	// Get and set in our pool; for redis we use our own pool
 	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
 	if ok {
-		conn, err := pool.Get(time.Second)
-		if err != nil {
-			return nil, err
-		}
+		conn := pool.Get()
+		//if err != nil {
+		//	return nil, err
+		//}
 		r.fIncr(redisInstance)
-		return conn.(*RedisConn), nil
+		return conn, nil
 	} else {
 		return nil, errors.New("Redis: instance Not found")
 	}
@@ -136,11 +144,12 @@ func (r *RedisStruct) PipeNFlush(redisInstance string, conn *RedisConn, cmd stri
 	}
 
 	ret, ferr := redis.String(conn.Do(cmd, args...))
-	if isNetworkError(ferr) {
-		pool.Put(nil)
-	} else {
-		pool.Put(conn)
-	}
+	//if isNetworkError(ferr) {
+	//	pool.Put(nil)
+	//} else {
+	//	pool.Put(conn)
+	//}
+	conn.Close()
 	return ret, ferr
 }
 
@@ -154,18 +163,19 @@ func (r *RedisStruct) Execute(redisInstance string, cmd string, args ...interfac
 	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
 	if ok {
-		conn, err := pool.Get(time.Second)
-		if err != nil {
-			return nil, err
-		}
+		conn := pool.Get()
+		//if err != nil {
+		//	return nil, err
+		//}
 		r.fIncr(redisInstance)
 		defer r.fDecr(redisInstance)
-		ret, ferr := conn.(*RedisConn).Do(cmd, args...)
-		if isNetworkError(ferr) {
-			pool.Put(nil)
-		} else {
-			pool.Put(conn)
-		}
+		ret, ferr := conn.Do(cmd, args...)
+		//if isNetworkError(ferr) {
+		//	pool.Put(nil)
+		//} else {
+		//	pool.Put(conn)
+		//}
+		conn.Close()
 		return ret, ferr
 	} else {
 		return nil, errors.New("Redis: instance Not found")
@@ -288,28 +298,29 @@ func (r *RedisStruct) Sismembers(redisInstance string, key string, members []str
 	pool, ok := redisPoolMap[redisInstance]
 	// Increment and decrement counters using user specified functions.
 	if ok {
-		conn, err := pool.Get(time.Second)
-		if err != nil {
-			return nil, err
-		}
+		conn := pool.Get()
+		//if err != nil {
+		//	return nil, err
+		//}
 		r.fIncr(redisInstance)
 		defer r.fDecr(redisInstance)
-		defer pool.Put(conn)
+		defer conn.Close()
 
 		for _, member := range members {
-			conn.(*RedisConn).Send("SISMEMBER", key, member)
+			conn.Send("SISMEMBER", key, member)
 		}
-		conn.(*RedisConn).Flush()
+		conn.Flush()
 
 		results := make([]bool, 0, len(members))
 		for _, _ = range members {
-			res, err := conn.(*RedisConn).Receive()
+			res, err := conn.Receive()
 			if err != nil {
-				if isNetworkError(err) {
-					pool.Put(nil)
-				} else {
-					pool.Put(conn)
-				}
+				//if isNetworkError(err) {
+				//	pool.Put(nil)
+				//} else {
+				//	pool.Put(conn)
+				//}
+				defer conn.Close()
 				return nil, err
 			}
 			val := res.(int64) != 0
