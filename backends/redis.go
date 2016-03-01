@@ -85,12 +85,16 @@ func configureRedis() {
 		t := time.Duration(time.Duration(milliSecTimeout) * time.Millisecond)
 		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 50, t)
 	*/
+	  factoryFunc := func(key string, config map[string]string)func() (redis.Conn,error) {
+                        return func() (redis.Conn, error) {
+                                return redisFactory(key, config)
+                        }
+                }
+
 		redisPoolMap[key] = &redis.Pool{
                 	MaxIdle: 20,
                 	MaxActive: 40, // max number of connections
-                	Dial: func()(redis.Conn,error){
-				return redisFactory(key,config)
-			},
+                	Dial: factoryFunc(key,config),
         	}
 	
 	}
