@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/garyburd/redigo/redis"
-//	pool "github.com/goibibo/minimal_vitess_pool/pools"
+	//pool "github.com/goibibo/minimal_vitess_pool/pools"
 	"github.com/goibibo/norse/config"
 )
 
@@ -51,16 +51,16 @@ func redisFactory(key string, config map[string]string) (redis.Conn, error) {
 	port := config["port"]
 	redisString := fmt.Sprintf("%s:%s", host, port)
 	cli, err := redis.Dial("tcp", redisString, redis.DialReadTimeout(time.Second), redis.DialWriteTimeout(time.Second))
+	if err != nil {
+		// Write exit
+		return nil, errors.New("Error in Redis Dial: " + err.Error())
+	}
 	// select default db if not specified
 	db, ok := config["db"]
 	if ok {
 		cli.Do("SELECT", db)
 	} else {
 		cli.Do("SELECT", 0)
-	}
-	if err != nil {
-		// Write exit
-		fmt.Println("Error in Redis Dial")
 	}
 	return cli, nil
 }
@@ -77,30 +77,30 @@ func configureRedis() {
 		os.Exit(1)
 	}
 	for key, config := range redisConfigs {
-	/*	factoryFunc := func(key string, config map[string]string) pool.Factory {
-			return func() (pool.Resource, error) {
+		/*	factoryFunc := func(key string, config map[string]string) pool.Factory {
+				return func() (pool.Resource, error) {
+					return redisFactory(key, config)
+				}
+			}
+			t := time.Duration(time.Duration(milliSecTimeout) * time.Millisecond)
+			redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 50, t)
+		*/
+		factoryFunc := func(key string, config map[string]string) func() (redis.Conn, error) {
+			return func() (redis.Conn, error) {
 				return redisFactory(key, config)
 			}
 		}
-		t := time.Duration(time.Duration(milliSecTimeout) * time.Millisecond)
-		redisPoolMap[key] = pool.NewResourcePool(factoryFunc(key, config), 10, 50, t)
-	*/
-	  factoryFunc := func(key string, config map[string]string)func() (redis.Conn,error) {
-                        return func() (redis.Conn, error) {
-                                return redisFactory(key, config)
-                        }
-                }
 
 		redisPoolMap[key] = &redis.Pool{
-                	MaxIdle: 20,
-                	MaxActive: 40, // max number of connections
-                	Dial: factoryFunc(key,config),
+			MaxIdle:   20,
+			MaxActive: 40, // max number of connections
+			Dial:      factoryFunc(key, config),
 			TestOnBorrow: func(c redis.Conn, t time.Time) error {
-			 _, err := c.Do("PING")
-			 return err
-			 },
-        	}
-	
+				_, err := c.Do("PING")
+				return err
+			},
+		}
+
 	}
 }
 
@@ -129,6 +129,9 @@ func (r *RedisStruct) GetConn(redisInstance string) (redis.Conn, error) {
 	// Increment and decrement counters using user specified functions.
 	if ok {
 		conn := pool.Get()
+		if conn.Err() != nil {
+			return nil, conn.Err()
+		}
 		//if err != nil {
 		//	return nil, err
 		//}
@@ -147,9 +150,9 @@ func (r *RedisStruct) PipeNFlush(redisInstance string, conn *RedisConn, cmd stri
 	defer r.fDecr(redisInstance) // Yikes! TODO dont decrement if not incr
 
 	//pool, ok := redisPoolMap[redisInstance]
-//	if !ok {
-//		return nil, errors.New("Pool get error")
-//	}
+	//if !ok {
+	//	return nil, errors.New("Pool get error")
+	//}
 
 	ret, ferr := redis.String(conn.Do(cmd, args...))
 	//if isNetworkError(ferr) {

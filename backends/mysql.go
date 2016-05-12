@@ -2,6 +2,7 @@ package backends
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -22,14 +23,14 @@ func configureMySql() {
 	var err error
 	config_map_mysql, err = config.LoadSqlConfig()
 	if err != nil {
-		panic("Error in loading config for mysql")
-
+		panic("Error in loading config for mysql:" + err.Error())
 	}
+
 	for vertical, _ := range config_map_mysql {
 		url := getSQLUrl(vertical, config_map_mysql)
 		mysqldb, err := sql.Open("mysql", url)
 		if err != nil {
-			panic("error in creating pool ")
+			panic("error in creating pool: " + err.Error())
 		}
 		mysqldb.SetMaxOpenConns(10)
 		mysqldb.SetMaxIdleConns(6)
@@ -59,7 +60,7 @@ func GetMysqlClient(incr, decr func(string) error, vertical string) (*MySqlStruc
 
 		return sqlstruct, nil
 	} else {
-		panic("vertical not present in config")
+		return &MySqlStruct{}, errors.New("From Mysql: DB Instance Not Found")
 	}
 }
 
@@ -68,23 +69,30 @@ func (m *MySqlStruct) Execute(query string) (*sql.Rows, error) {
 	defer m.decr(m.key)
 	return m.DB.Query(query)
 }
-func getSQLUrl(vertical string, config_map_mysql map[string]map[string]string) string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config_map_mysql[vertical]["username"], config_map_mysql[vertical]["password"], config_map_mysql[vertical]["host"], config_map_mysql[vertical]["port"], config_map_mysql[vertical]["database"])
 
+func getSQLUrl(vertical string, config_map_mysql map[string]map[string]string) string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+		config_map_mysql[vertical]["username"],
+		config_map_mysql[vertical]["password"],
+		config_map_mysql[vertical]["host"],
+		config_map_mysql[vertical]["port"],
+		config_map_mysql[vertical]["database"])
 }
+
 func incr(s string, i int64) error {
 	return nil
 }
+
 func decr(s string, i int64) error {
 	return nil
 }
-func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 
+func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
+	emptyMapList := make([]map[string]interface{}, 0)
 	var err error
 	rows, err := m.Execute(query)
 	if err != nil {
-		fmt.Println(err)
-		panic("From MySQL: Error in executing select query")
+		return emptyMapList, err
 	}
 	columns, _ := rows.Columns()
 
@@ -102,8 +110,6 @@ func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 		for i, col := range values {
 			if col != nil {
 				switch col.(type) {
-				default:
-					panic("From MySQL: Unknown Type in type switching")
 				case bool:
 					record[columns[i]] = col.(bool)
 				case int:
@@ -111,7 +117,6 @@ func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 				case int64:
 					record[columns[i]] = col.(int64)
 				case float64:
-
 					record[columns[i]] = col.(float64)
 				case string:
 					record[columns[i]] = col.(string)
@@ -119,6 +124,8 @@ func (m *MySqlStruct) Select(query string) ([]map[string]interface{}, error) {
 					record[columns[i]] = string(col.([]byte))
 				case time.Time:
 					record[columns[i]] = col.(string)
+				default:
+					return emptyMapList, errors.New("From MySQL: Unknown Type in type switching")
 				}
 			}
 		}

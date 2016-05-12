@@ -23,7 +23,7 @@ func Configure(path string) {
 	configFilePath = path
 	jsonConfigInstance, loadErr = loadConfig()
 	if loadErr != nil {
-		os.Exit(1)
+		panic("ERROR LOADING CONFIG: " + loadErr.Error())
 	}
 	_, IsRedisConfigured = jsonConfigInstance["redis"]
 	_, IsMemcacheConfigured = jsonConfigInstance["memcache"]
@@ -37,8 +37,11 @@ func loadConfig() (jsonConfig, error) {
 		os.Exit(1)
 	}
 	file, err := ioutil.ReadFile(configFilePath)
+	if err != nil {
+		return nil, err
+	}
 	if err = json.Unmarshal(file, &jsonConfigInstance); err != nil {
 		return nil, err
 	}
-	return jsonConfigInstance, err
+	return jsonConfigInstance, nil
 }
