@@ -53,8 +53,7 @@ func redisFactory(key string, config map[string]string) (redis.Conn, error) {
 	cli, err := redis.Dial("tcp", redisString, redis.DialReadTimeout(time.Second), redis.DialWriteTimeout(time.Second))
 	if err != nil {
 		// Write exit
-		fmt.Println("Error in Redis Dial")
-		return nil, err
+		return nil, errors.New("Error in Redis Dial: " + err.Error())
 	}
 	// select default db if not specified
 	db, ok := config["db"]
